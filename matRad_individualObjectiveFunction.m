@@ -79,11 +79,8 @@ for  i = 1:size(cst,1)
                 switch robustness
                     case 'none' % if conventional opt: just sum objectives of nominal dose
                         for ixScen = useScen
-                            'a'
-                            i
-                            j
                             d_i = d{ixScen}(cst{i,4}{useScen(1)});
-                            fInd = 1/cst{i,6}{j}.penalty*objective.computeDoseObjectiveFunction(d_i);
+                            fInd = 1/objective.penalty*objective.computeDoseObjectiveFunction(d_i);
                             f = f + fInd;
                             cst{i,6}{j}.objValue = fInd;
                         end

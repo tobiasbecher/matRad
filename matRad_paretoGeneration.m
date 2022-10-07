@@ -293,7 +293,6 @@ optimizers = cell(size(pen{1}));
 
 
 % PARETO PART
-
 %loop over VOI and get indices in cst file
 numOfObj = 0;
 idxVOI = zeros(size(VOIs));
@@ -311,6 +310,7 @@ fInd = cell(numOfObj,1);
 % loop over all penalty combinations
 for i = 1:size(pen{1},1)
     % loop over structures of interest and update penValues
+    % !only loops over structures with varying penalties so far!
     for j = 1:numel(idxVOI) 
         for k = 1:size(pen{j},2)
             cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k);
@@ -334,10 +334,9 @@ for i = 1:size(pen{1},1)
     for j = 1:numel(idxVOI) 
         for k = 1:size(pen{j},2)
             fInd{fID} = [fInd{fID} cst{idxVOI(j),6}{k}.objValue];
-            fID = fID + k;
+            fID = fID + 1;
         end
     end
-    fID
     resultGUI.cst = cst;
     resultGUI.cst = cst;
     

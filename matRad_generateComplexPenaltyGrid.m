@@ -1,4 +1,4 @@
-function [penVal,penGrid] = matRad_generateComplexPenaltyGrid(penaltyMap)
+function [penVal,penGrid] = matRad_generateComplexPenaltyGrid(VOI, penalties)
 % matRad function to create an easily loopable penalty grid
 % 
 %
@@ -24,17 +24,16 @@ function [penVal,penGrid] = matRad_generateComplexPenaltyGrid(penaltyMap)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-VOI = penaltyMap.keys;
-penalties = penaltyMap.values;
+%VOI = penaltyMap.keys; %!!! Sorts keys alphabetically
+%penalties = penaltyMap.values;
 
 %create array storing number of objectives/penalties for each VOI
 sizes = zeros(1,numel(VOI));
 for i=1:numel(VOI)    
-    key = VOI{i};
-    indPen = penaltyMap(key);
+    indPen = penalties{i};
     sizes(i) = size(indPen,2);
 end
-
+sizes
 % convert grid with VOIs with possibly more than one objective function
 singPen = cell(1,sum(sizes));
 k = 1;
