@@ -27,10 +27,9 @@
 % search path.
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-load('Liver.mat');
-cst{16,6}{2} = struct(DoseObjectives.matRad_SquaredUnderdosing(100,30));
+load('TG119.mat');
+%cst{15,6}{2} = DoseObjectives.matRad_SquaredDeviation(100,25);
 %%
-size(cst{16,6},2)
 %%
 % The file TG119.mat contains two Matlab variables. Let's check what we 
 % have just imported. First, the 'ct' variable comprises the ct cube along
@@ -157,16 +156,20 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % the clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to 
 % visualize the optimized dose cubes.
-VOI = {'PTV','Skin'};
-penalties = {{{200,400},{100,300}},{{0,200}}};
-pairing = containers.Map(VOI,penalties);
-
-[penVal,penGrid] = matRad_generateComplexPenaltyGrid(pairing);
-
+%% Paretooptimation
+% The goal of this step is to define a grid of penalty values that
+% are then evaluated using the matRad_paretoGeneration method
+% The VOI and their respective penalties are defined in the following way
+% It is possible to have more than one objective function per VOI
+% penVal stores the Grid which is then passed on. penGrid contains an
+% version easier to visualize, however harder to loop over
+VOI = {'Core','OuterTarget','BODY'};
+penalties = {{{200,400,500}},{{100,200,300}},{{100,200}}};
+[penVal,penGrid] = matRad_generateComplexPenaltyGrid(VOI,penalties);
 %%
 plot3(penGrid(:,1),penGrid(:,2),penGrid(:,3),'.')
 %%
-resultGUIs = matRad_paretoGeneration(dij,cst,pln,penVal,VOI);
+[resultGUIs,opts,finds] = matRad_paretoGeneration(dij,cst,pln,penVal,VOI);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
@@ -174,8 +177,12 @@ resultGUIs = matRad_paretoGeneration(dij,cst,pln,penVal,VOI);
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 for i=1:size(resultGUIs,1)
     figure
-    imagesc(resultGUIs{1}.physicalDose(:,:,slice)),colorbar, colormap(jet);
+    imagesc(resultGUIs{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
 end
+%%
+%%
+plot(finds{2},finds{3},'.')
+%plot3(finds{1},finds{2},finds{3},'.')
 %%
 afkljs
 %%
