@@ -27,6 +27,7 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
     properties
         parameters = {60};
         penalty = 1;
+        objValue = 0;
     end
     
     methods
