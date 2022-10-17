@@ -65,7 +65,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             % deviation : dose minus prefered dose
             deviation = dose - obj.parameters{1};
             % claculate objective function
-            fDose = obj.penalty/numel(dose) * (deviation'*deviation);
+            fDose = 1/numel(dose) * (deviation'*deviation);
         end
         
         %% Calculates the Objective Function gradient
@@ -74,13 +74,13 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             deviation = dose - obj.parameters{1};
             
             % calculate delta
-            fDoseGrad = 2 * obj.penalty/numel(dose) * deviation;
+            fDoseGrad = 2 * 1/numel(dose) * deviation;
         end
         function fDose = computeDoseObjectiveFunctionNoPenalty(obj,dose)
             % deviation : dose minus prefered dose
             deviation = dose - obj.parameters{1};
             % claculate objective function
-            fDose = numel(dose) * (deviation'*deviation);
+            fDose = 1/numel(dose) * (deviation'*deviation);
         end
     end
     
