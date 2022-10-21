@@ -1,4 +1,4 @@
-function [resultGUIs,optimizers,fInd] = matRad_paretoGeneration(dij,cst,pln,pen,VOIs,wInit)
+function returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs,wInit)
 % matRad inverse pareto planning wrapper function
 % 
 % call
@@ -9,7 +9,7 @@ function [resultGUIs,optimizers,fInd] = matRad_paretoGeneration(dij,cst,pln,pen,
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
-%   pen:        STRUCT WITH DIFFERENT PENALTIES FOR PARETOSURFACE
+%   nPoints:    Number of pareto optimal points
 %   VOIs:       Volumes for variation of penalties
 %   wInit:      (optional) custom weights to initialize problems
 %
@@ -17,6 +17,7 @@ function [resultGUIs,optimizers,fInd] = matRad_paretoGeneration(dij,cst,pln,pen,
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   optimizer:  Used Optimizer Object
+%   fInd:       Array storing each individual final obj fnct value
 %
 % References
 %   -
@@ -288,72 +289,82 @@ end
 
 %check that number of penalties equals number of constraints
 
-resultGUIs = cell(size(pen{1}));
-optimizers = cell(size(pen{1}));
-
 
 % PARETO PART
 %loop over VOI and get indices in cst file
-numOfObj = 0;
+sizes = zeros(1,numel(VOIs));
 idxVOI = zeros(size(VOIs));
 VOIStr = convertCharsToStrings(VOIs);
+VOIObjNames = [];
+
+%loop over VOI and associate to index in cst. Also Get number of obj functions
 for  i = 1:numel(VOIStr)
     for j = 1:size(cst,1)
-        
         if VOIStr(i)== cst{j,2}
             idxVOI(i) = j;
-            numOfObj = numOfObj + size(cst{j,6},2);
+            sizes(i) =  size(cst{j,6},2);
+            
+            for k = 1:size(cst{j,6},2)
+                name = VOIStr(i) + " " + convertCharsToStrings(cst{j,6}{k}.name);
+                VOIObjNames = [VOIObjNames name];
+            end
         end 
     end
 end
-fInd = cell(numOfObj,1);
+
+numOfObj = sum(sizes);
+fprintf('NumOfObj: %d \n',numOfObj);
+[pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,sizes);
+matRad_plotPenaltyGrid(penGrid);
+
+weights = zeros(numel(wInit),nPoints);
+fInd = zeros(nPoints,numOfObj);
+
 % loop over all penalty combinations
 for i = 1:size(pen{1},1)
+    fprintf('Iteration: %d \n',i);
+    
     % loop over structures of interest and update penValues
     % !only loops over structures with varying penalties so far!
-    for j = 1:numel(idxVOI) 
+    for j = 1:numel(idxVOI) %loop over indices
+        
         for k = 1:size(pen{j},2)
+            cst{idxVOI(j),6}{k}.penalty
+            pen{j}(i,k)
             cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k);
         end
+        
     end
     
     
     optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
     wOpt = optimizer.wResult;
     info = optimizer.resultInfo;
-
-    resultGUI = matRad_calcCubes(wOpt,dij);
-    resultGUI.wUnsequenced = wOpt;
-    resultGUI.usedOptimizer = optimizer;
-    resultGUI.info = info;
+    weights(:,i) = wOpt;
 
     cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
     
     fID  = 1;
-    %get the indivdual values and return them all
-    for j = 1:numel(idxVOI) 
+    %get the indivdual objective function values and return them all
+    for j = 1:numel(idxVOI)
         for k = 1:size(pen{j},2)
-            fInd{fID} = [fInd{fID} cst{idxVOI(j),6}{k}.objValue];
+            fInd(i,fID) = cst{idxVOI(j),6}{k}.objValue;
             fID = fID + 1;
         end
     end
-    resultGUI.cst = cst;
-    resultGUI.cst = cst;
-    
-    %Robust quantities
-    if FLAG_ROB_OPT || numel(ixForOpt) > 1   
-        Cnt = 1;
-        for k = find(~cellfun(@isempty,dij.physicalDose))'
-            tmpResultGUI = matRad_calcCubes(wOpt,dij,k);
-            resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
-            Cnt = Cnt + 1;
-        end
-    end
-    optimizers{i} = optimizer;
-    resultGUIs{i} = resultGUI;
     %update initial weights
     wInit = wOpt;
-    
+    %figure(fig1), plot(fInd{1},fInd{2});
+    %refreshdata
+    %drawnow
+    'a'
+    pause(1)
+    'b'
 end
+returnStruct.weights = weights;
+returnStruct.finds = fInd;
+returnStruct.VOIObj = VOIObjNames;
+returnStruct.penGrid = penGrid;
+returnStruct.pen = pen;
 % unblock mex files
 clear mex

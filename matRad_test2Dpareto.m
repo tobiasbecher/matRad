@@ -162,19 +162,21 @@ VOI = {'PTV','Skin'};
 
 %[penVal,penGrid] = matRad_generateComplexPenaltyGrid(pairing);
 %%
-max = 2300;
+max = 1000;
 penVal2 = cell(size(VOI));
-penalties = (100:200:max).' ;
+penalties = (0:200:max).' ;
 penVal2{1} = penalties;
-penVal2{2} = max-penalties;
+penVal2{2} = (max-penalties);
 %%
-
+%%
+plot(penVal2{1},penVal2{2},'.')
 %%
 [resultGUIs,b,c] = matRad_paretoGeneration(dij,cst,pln,penVal2,VOI);
 %%
 %%
+%%
 figure
-fff = plot(c{1},c{2},'.')
+fff = plot(c{1}(2:end),c{2}(2:end),'.')
 
 %saveas(figure,'test.jpg')
 %% Plot the Resulting Dose Slice
@@ -191,6 +193,6 @@ size(penVal{1},1)
 %%
 'aaa'
 plane      = 3;
-absDiffCube = resultGUIs{2}.physicalDose-resultGUIs{1}.physicalDose;
+absDiffCube = resultGUIs{7}.physicalDose-resultGUIs{2}.physicalDose;
 figure,title( 'fine beam spacing plan - coarse beam spacing plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);

@@ -22,6 +22,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         wResult
         resultInfo
         env
+        finalValues
     end
     
     properties (Access = private)
@@ -76,7 +77,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
             obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
-            obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
+            obj.options.max_iter                      = 500;%matRad_cfg.propOpt.defaultMaxIter;
             obj.options.max_cpu_time                  = 7200;
             
             % Barrier Parameter (C.6)
@@ -309,7 +310,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             drawnow;
             
             % ensure to bring optimization window to front
-            figure(hFig);
+            %figure(hFig);
         end
         
         function abortCallbackKey(obj,~,KeyEvent)

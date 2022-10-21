@@ -1,6 +1,3 @@
-%% Example: Photon Treatment Plan
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017 the matRad development team. 
 % 
@@ -27,13 +24,9 @@
 % search path.
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-load('TG119.mat');
+load('Liver.mat');
 %%
-%readjust some parameters for visualization
-cst{1,6}{1}.parameters = {0};
-cst{3,6}{1}.parameters = {0};
-%%
-%%
+%% 
 % The file TG119.mat contains two Matlab variables. Let's check what we 
 % have just imported. First, the 'ct' variable comprises the ct cube along
 %with some meta information describing properties of the ct cube (cube 
@@ -103,7 +96,7 @@ modelName      = 'none';
 % size of 5 x 5 mm in the isocenter plane. The number of fractions is set 
 % to 30. Internally, matRad considers the fraction dose for optimization, 
 % however, objetives and constraints are defined for the entire treatment.
-pln.numOfFractions         = 1;
+pln.numOfFractions         = 30;
 pln.propStf.gantryAngles   = [0:40:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth     = 5;
@@ -159,77 +152,23 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % the clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to 
 % visualize the optimized dose cubes.
-%% Paretooptimization
-% The goal of this step is to define a grid of penalty values that
-% are then evaluated using the matRad_paretoGeneration method
-% The VOI and their respective penalties are defined in the following way
-% It is possible to have more than one objective function per VOI
-% penVal stores the Grid which is then passed on. penGrid contains an
-% version easier to visualize, however harder to loop over
-VOI = {'OuterTarget','Core','BODY'};
-%%
-%objective function values are returned in order of ordering in VOI
-%returnStruct= matRad_paretoGeneration(dij,cst,pln,5,VOI);
-%%
-%%
-%save('resultsTG119GUIs.mat','-v7.3','resultGUIs');
-%%
-%save('resultsTG119finds.mat','-v7.3','finds');
-%save('resultsTG119pen.mat','-v7.3','pens');
-%save('resultsTG119findscopy.mat','-v7.3','findsCopy');
-%save('resultsTG119pencopy.mat','-v7.3','pensCopy');
-%%
-%load('resultsTG119GUIs.mat')
-
-%%
-%%
-%weights = zeros(200,2851);
-%for i = 1:size(resultGUIs)
-%    weights(i,:) = resultGUIs{i}.w;
-%end
-%%
-%saveStruct.weights = weights;
-%saveStruct.pen = pens;
-%saveStruct.finds = finds;
-%VOIObj = ["Outer Target, Squared Overdosing", "Core, Squared Deviation", "BODY, Squared Overdosing"];
-%saveStruct.VOIObj = VOIObj;
-%%
-%save('resultsTG119.mat','-v7.3','saveStruct');
+resultGUI2 = matRad_fluenceOptimization(dij,cst,pln);
 %%
 
-load('resultsTG119.mat')
+%save('resultNoSquare.mat','resultGUI');
 %%
-findsCopy = saveStruct.finds;
-pensCopy = saveStruct.pen;
-VOIObj = saveStruct.VOIObj;
-%%
-findsCopy(70,:) = [];
-pensCopy(70,:) = [];
-%%
-matRad_plotParetoSurface(findsCopy,pensCopy,VOIObj)
-%%
-matRad_plotPenaltyGrid(pensCopy);
-%% Plot the Resulting Dose Slice
-
-% Let's plot the transversal iso-center dose slice
 
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-for i=1:size(resultGUIs,1)
-    figure
-    imagesc(resultGUIs{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
-end
-%%
-%%
-%plot(finds{1},finds{3},'.')
-plot3(finds{1}(3:end),finds{2}(3:end),finds{3}(3:end),'.')
-xlabel('X');ylabel('Y');zlabel('Z')
-%%
-finds{1}
-%%
-afkljs
-%%
-'aaa'
 plane      = 3;
-absDiffCube = resultGUIs{2}.physicalDose-resultGUIs{1}.physicalDose;
+doseWindow = [0 max([resultGUI.physicalDose(:); resultGUI2.physicalDose(:)])];
+
+figure,title('original plan - fine beam spacing')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+figure,title('modified plan - coarse beam spacing')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI2.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+
+%%
+absDiffCube = resultGUI.physicalDose-resultGUI2.physicalDose;
 figure,title( 'fine beam spacing plan - coarse beam spacing plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+%matRadGUI;

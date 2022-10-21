@@ -1,16 +1,14 @@
-function [resultGUIs,optimizers,fInd] = matRad_paretoGeneration(dij,cst,pln,pen,VOIs,wInit)
-% matRad inverse pareto planning wrapper function
+function [resultGUI,optimizer,cst] = matRad_gamultobjopt(dij,cst,pln,wInit)
+% matRad inverse planning wrapper function
 % 
 % call
-%   [resultGUI,optimizer] = matRad_paretoGeneration(dij,cst,pln,pen)
-%   [resultGUI,optimizer] = matRad_paretoGeneration(dij,cst,pln,pen,wInit)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
 % input
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
-%   pen:        STRUCT WITH DIFFERENT PENALTIES FOR PARETOSURFACE
-%   VOIs:       Volumes for variation of penalties
 %   wInit:      (optional) custom weights to initialize problems
 %
 % output
@@ -86,7 +84,7 @@ for i = 1:size(cst,1)
             dParams = fObjCell{1}.getDoseParameters();
             %Don't care for Inf constraints
             dParams = dParams(isfinite(dParams));
-            %Add to dose list
+            %Add do dose list
             fDoses = [fDoses dParams];
         end
                 
@@ -281,77 +279,39 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
     case 'fmincon'
         optimizer = matRad_OptimizerFmincon;
+    case 'gamultiobj'
+        optimizer = matRad_OptimizerGamultiobj;
     otherwise
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
+tic
+optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
+elapsed_time = toc;
+xs = optimizer.xs;
+info = optimizer.resultInfo;
+resultGUI.xs = xs;
+resultGUI.info = info;
+resultGUI.time = elapsed_time;
+resultGUI.optiProb = optiProb;
+%resultGUI = matRad_calcCubes(wOpt,dij);
+%resultGUI.usedOptimizer = optimizer;
+%resultGUI.info = info;
 
-%check that number of penalties equals number of constraints
+%cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
 
-resultGUIs = cell(size(pen{1}));
-optimizers = cell(size(pen{1}));
+%resultGUI.cst = cst;
 
-
-% PARETO PART
-
-%loop over VOI and get indices in cst file
-numOfObj = 0;
-idxVOI = zeros(size(VOIs));
-VOIStr = convertCharsToStrings(VOIs);
-for  i = 1:numel(VOIStr)
-    for j = 1:size(cst,1)
-        
-        if VOIStr(i)== cst{j,2}
-            idxVOI(i) = j;
-            numOfObj = numOfObj + size(cst{j,6},2);
-        end 
+%Robust quantities
+%{
+if FLAG_ROB_OPT || numel(ixForOpt) > 1   
+    Cnt = 1;
+    for i = find(~cellfun(@isempty,dij.physicalDose))'
+        tmpResultGUI = matRad_calcCubes(wOpt,dij,i);
+        resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
+        Cnt = Cnt + 1;
     end
 end
-fInd = cell(numOfObj,1);
-% loop over all penalty combinations
-for i = 1:size(pen{1},1)
-    % loop over structures of interest and update penValues
-    for j = 1:numel(idxVOI) 
-        for k = 1:size(pen{j},2)
-            cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k);
-        end
-    end
-    
-    %{
-    optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
-    wOpt = optimizer.wResult;
-    info = optimizer.resultInfo;
-
-    resultGUI = matRad_calcCubes(wOpt,dij);
-    resultGUI.wUnsequenced = wOpt;
-    resultGUI.usedOptimizer = optimizer;
-    resultGUI.info = info;
-
-    cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
-    
-    %get the indivdual values and return them all
-    for j = 1:numel(idxVOI) 
-        for k = 1:size(pen{j},2)
-            fInd{j} = [fInd{j} cst{idxVOI(j),6}{k}.objValue];
-        end
-    end
-    resultGUI.cst = cst;
-    resultGUI.cst = cst;
-    
-    %Robust quantities
-    if FLAG_ROB_OPT || numel(ixForOpt) > 1   
-        Cnt = 1;
-        for k = find(~cellfun(@isempty,dij.physicalDose))'
-            tmpResultGUI = matRad_calcCubes(wOpt,dij,k);
-            resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
-            Cnt = Cnt + 1;
-        end
-    end
-    optimizers{i} = optimizer;
-    resultGUIs{i} = resultGUI;
-    %update initial weights
-    wInit = wOpt;
-    %}
-end
+%}
 % unblock mex files
 clear mex

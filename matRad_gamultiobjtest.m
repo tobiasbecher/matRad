@@ -27,11 +27,8 @@
 % search path.
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-load('TG119.mat');
-%%
-%readjust some parameters for visualization
-cst{1,6}{1}.parameters = {0};
-cst{3,6}{1}.parameters = {0};
+load('Liver.mat');
+%cst{15,6}{2} = DoseObjectives.matRad_SquaredDeviation(100,25);
 %%
 %%
 % The file TG119.mat contains two Matlab variables. Let's check what we 
@@ -103,7 +100,7 @@ modelName      = 'none';
 % size of 5 x 5 mm in the isocenter plane. The number of fractions is set 
 % to 30. Internally, matRad considers the fraction dose for optimization, 
 % however, objetives and constraints are defined for the entire treatment.
-pln.numOfFractions         = 1;
+pln.numOfFractions         = 30;
 pln.propStf.gantryAngles   = [0:40:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth     = 5;
@@ -132,6 +129,8 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');
+
+%%
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:
@@ -166,51 +165,11 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % It is possible to have more than one objective function per VOI
 % penVal stores the Grid which is then passed on. penGrid contains an
 % version easier to visualize, however harder to loop over
-VOI = {'OuterTarget','Core','BODY'};
+pln.propOpt.optimizer = 'gamultiobj';
+[resultGUIs,opts,cst] = matRad_gamultobjopt(dij,cst,pln);
 %%
-%objective function values are returned in order of ordering in VOI
-%returnStruct= matRad_paretoGeneration(dij,cst,pln,5,VOI);
-%%
-%%
-%save('resultsTG119GUIs.mat','-v7.3','resultGUIs');
-%%
-%save('resultsTG119finds.mat','-v7.3','finds');
-%save('resultsTG119pen.mat','-v7.3','pens');
-%save('resultsTG119findscopy.mat','-v7.3','findsCopy');
-%save('resultsTG119pencopy.mat','-v7.3','pensCopy');
-%%
-%load('resultsTG119GUIs.mat')
-
-%%
-%%
-%weights = zeros(200,2851);
-%for i = 1:size(resultGUIs)
-%    weights(i,:) = resultGUIs{i}.w;
-%end
-%%
-%saveStruct.weights = weights;
-%saveStruct.pen = pens;
-%saveStruct.finds = finds;
-%VOIObj = ["Outer Target, Squared Overdosing", "Core, Squared Deviation", "BODY, Squared Overdosing"];
-%saveStruct.VOIObj = VOIObj;
-%%
-%save('resultsTG119.mat','-v7.3','saveStruct');
-%%
-
-load('resultsTG119.mat')
-%%
-findsCopy = saveStruct.finds;
-pensCopy = saveStruct.pen;
-VOIObj = saveStruct.VOIObj;
-%%
-findsCopy(70,:) = [];
-pensCopy(70,:) = [];
-%%
-matRad_plotParetoSurface(findsCopy,pensCopy,VOIObj)
-%%
-matRad_plotPenaltyGrid(pensCopy);
+aaaaaaaaaaaaaaaaa
 %% Plot the Resulting Dose Slice
-
 % Let's plot the transversal iso-center dose slice
 
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
@@ -221,8 +180,8 @@ end
 %%
 %%
 %plot(finds{1},finds{3},'.')
-plot3(finds{1}(3:end),finds{2}(3:end),finds{3}(3:end),'.')
-xlabel('X');ylabel('Y');zlabel('Z')
+%plot3(finds{1}(3:end),finds{2}(3:end),finds{3}(3:end),'.')
+%xlabel('X');ylabel('Y');zlabel('Z')
 %%
 finds{1}
 %%

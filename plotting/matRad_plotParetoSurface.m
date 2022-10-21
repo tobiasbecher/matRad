@@ -1,5 +1,9 @@
-function matRad_plotParetoSurface(fInd,penGrid)
-% matRad function that plots a colour coded Pareto Surface. 
+function matRad_plotParetoSurface(fInd,penGrid,VOIObj)
+% matRad function that plots a color coded Pareto Surface. Colors are based
+% on penalty values of the data points in 3 dimensions.
+% Red means higher penalties of objective plotted along x-axis.
+% Green means higher penalties of objective plotted along y-axis.
+% Blue means higher penalties of objective plotted along z-axis.
 %
 % call
 %   cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
@@ -34,13 +38,13 @@ switch size(fInd,2)
     case 2
         penGrid = [penGrid,zeros(size(penGrid,1),1)];
         scatter(fInd(:,1),fInd(:,2),[],penGrid,'filled')
-        xlabel('Objective function value 1');
-        ylabel('Objective function value 2');
+        xlabel("x: " + VOIObj(1));
+        xlabel("y: " + VOIObj(2));
     case 3
         scatter3(fInd(:,1),fInd(:,2),fInd(:,3),[], penGrid,'filled')
-        xlabel('Objective function value 1');
-        ylabel('Objective function value 2');
-        zlabel('Objective function value 3');
+        xlabel("x: " + VOIObj(1));
+        ylabel("y: " + VOIObj(2));
+        zlabel("z: " + VOIObj(3));
     otherwise
         warning(['Number of objectives for Pareto Analysis not suited for Plot!']);
 end

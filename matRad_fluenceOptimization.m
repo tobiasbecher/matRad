@@ -1,4 +1,4 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
+function [resultGUI,optimizer,cst] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -278,13 +278,15 @@ switch pln.propOpt.optimizer
     case 'IPOPT'
         optimizer = matRad_OptimizerIPOPT;
     case 'fmincon'
+        'using fmincon'
         optimizer = matRad_OptimizerFmincon;
+    %case 'gamultiobj'
+    %    optimizer = matRad_OptimizerGamultiobj;
     otherwise
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
        
-
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;
@@ -294,6 +296,10 @@ resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
+
+cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
+
+resultGUI.cst = cst;
 
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1   
