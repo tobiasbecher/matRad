@@ -2,15 +2,15 @@ function [penVal,sample] = matRad_generateSphericalPenaltyGrid(nPoints,sizes)
 % matRad function that generates points for Pareto analysis, 
 % distributed on a sphere based on random sampling
 % call
-%   sample = matRad_generateSphericalPenaltyGrid(nPoints,nDims)
+%   [penVal,sample] = matRad_generateSphericalPenaltyGrid(nPoints,nDims)
 %
 % input
 %   nPoints     Number of points for penalty grid
-%   nDims       Number of dimensions that are varied
-%   VOI         List of Volume of interests
+%   sizes       Array storing the number of objectives for each VOI
 %
 % output
-%   sample      Coordinates of points on sphere
+%   sample      Coordinates of points on sphere, sorted based on Travelling
+%   Salesman
 %
 % References
 %  DOI: 10.1214/009117904000000874
@@ -32,6 +32,9 @@ function [penVal,sample] = matRad_generateSphericalPenaltyGrid(nPoints,sizes)
 randNums= abs(normrnd(0,1,[nPoints,sum(sizes)]));
 r = sqrt(sum(randNums.^2,2));
 sample = randNums./r;
+sample = matRad_AdjustedTravellingSalesman(sample);
+
+%generate cell array for easier looping
 penVal = cell(size(sizes));
 k = 1;
 for i=1:numel(sizes)

@@ -31,12 +31,15 @@ function matRad_plotPenaltyGrid(penPoints)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+figure
 switch size(penPoints,2)
     case 2
         scatter(penPoints(:,1),penPoints(:,2),'filled','MarkerFaceColor',[0.4660 0.6740 0.1880])
         xlabel('Penalty 1');
         ylabel('Penalty 2');
     case 3
+        plot3(penPoints(:,1),penPoints(:,2),penPoints(:,3),'Color','black')
+        hold on 
         scatter3(penPoints(:,1),penPoints(:,2),penPoints(:,3),[], penPoints(:,3),'filled')
         colormap(gca,"summer")
         xlabel('Penalty 1');

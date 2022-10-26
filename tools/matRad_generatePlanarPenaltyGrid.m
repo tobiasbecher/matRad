@@ -2,7 +2,7 @@ function [penVal,sample] = matRad_generatePlanarPenaltyGrid(nPoints,sizes)
 % matRad function that generates points for Pareto analysis, 
 % distributed on a sphere based on random sampling
 % call
-%   [penVal,sample] = matRad_generateSphericalPenaltyGrid(nPoints,nDims)
+%   [penVal,sample] = matRad_generatePlanarPenaltyGrid(nPoints,nDims)
 %
 % input
 %   nPoints:    Number of points for penalty grid
@@ -26,10 +26,13 @@ function [penVal,sample] = matRad_generatePlanarPenaltyGrid(nPoints,sizes)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+%generate random points with fixed sum
 randNums= exprnd(1,[nPoints,sum(sizes)]);
 r = sum(randNums,2);
 sample = randNums./r;
+sample = matRad_AdjustedTravellingSalesman(sample);
+
+%generate cell array for easier looping
 penVal = cell(size(sizes));
 k = 1;
 for i=1:numel(sizes)
