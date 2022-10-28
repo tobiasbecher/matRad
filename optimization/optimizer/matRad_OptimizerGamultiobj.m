@@ -20,7 +20,7 @@ classdef matRad_OptimizerGamultiobj < matRad_Optimizer
 
     
     properties
-        options     %the optimoptions for fmincon
+        options     %the optimoptions for gamulitobj
         xs          %last optimization result
         resultInfo  %info struct about last results
         wResult
@@ -40,17 +40,16 @@ classdef matRad_OptimizerGamultiobj < matRad_Optimizer
             obj.options = optimoptions('gamultiobj',...
                 'FunctionTolerance',3e-5,...
                 'Display', 'diagnose',...
-                'UseParallel',True);
-                %'PlotFcn',{@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt});                    
-        end
+                'PlotFcn','gaplotpareto',...
+                'UseParallel',true);
+            end
                 
         function obj = optimize(obj,w0,optiProb,dij,cst)
-            %optimize Carries Out the optimization
-            
+            %optimize carries Out the optimization
             % obtain lower and upper variable bounds
-            lb = optiProb.lowerBounds(w0);
-            ub = optiProb.upperBounds(w0);
-                        
+            lb = optiProb.lowerBounds(w0(1,:));
+            ub = optiProb.upperBounds(w0(1,:));
+            obj.options.InitialPopulationMatrix = w0';            
             % Informing user to press q to terminate optimization
             %fprintf('\nOptimzation initiating...\n');
             %fprintf('Press q to terminate the optimization...\n');
@@ -58,7 +57,7 @@ classdef matRad_OptimizerGamultiobj < matRad_Optimizer
             % Run gamultiobj.
             numel(w0)
             [obj.xs,fVal,exitflag,info] = gamultiobj(@(x) obj.gamultiobj_objAndGradWrapper(x,optiProb,dij,cst),...
-                numel(w0),... % Number of variables
+                size(w0,1),... % Number of variables
                 [],[],... % Linear Constraints we do not explicitly use
                 [],[],... % Also no linear inequality constraints
                 lb,ub,... % Lower and upper bounds for optimization variable
