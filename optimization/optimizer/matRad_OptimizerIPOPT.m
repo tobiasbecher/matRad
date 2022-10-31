@@ -19,6 +19,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     
     properties
         options
+        optionsWarmStart
         wResult
         resultInfo
         env
@@ -40,7 +41,6 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %   interface)
             
             matRad_cfg = MatRad_Config.instance();
-            
             obj.wResult = [];
             obj.resultInfo = [];
             obj.axesHandle = [];
@@ -59,7 +59,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 %IPOPT!
                 lvl = 5;
             end
-                
+            
+            %default warm start no
+            
+            
             obj.options.print_level                   = lvl;
             obj.options.print_user_options            = 'no';
             obj.options.print_options_documentation   = 'no';
@@ -104,6 +107,12 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
             % obj.options.derivative_test_tol          = 1e-6;  
             
+            %set warmStart Options
+            obj.optionsWarmStart.use = false;
+            obj.optionsWarmStart.zl = [];
+            obj.optionsWarmStart.zb = [];
+            obj.optionsWarmStart.lambda = [];
+            
             if ~matRad_checkMexFileExists('ipopt')
                 matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
             end
@@ -111,6 +120,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
+            obj.options
             matRad_cfg = MatRad_Config.instance();
             
             % set optimization options            
@@ -128,6 +138,16 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %constraint bounds;
             [ipoptStruct.cl,ipoptStruct.cu] = optiProb.matRad_getConstraintBounds(cst);
             
+            %warm start options
+            if obj.optionsWarmStart.use == true
+                matRad_cfg.dispInfo('\nUsing a warm start! \n');
+                obj.options.warm_start_init_point         = 'yes';
+                ipoptStruct.zl = obj.optionsWarmStart.zl;
+                ipoptStruct.zu = obj.optionsWarmStart.zu;
+                ipoptStruct.lambda = obj.optionsWarmStart.lambda;
+            end
+            
+            ipoptStruct.ipopt = obj.options;
             % set callback functions.
             
             funcs.objective         = @(x) optiProb.matRad_objectiveFunction(x,dij,cst);
@@ -165,7 +185,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %ipoptStruct.options = obj.options;
             obj.abortRequested = false;
             obj.plotFailed = false;
-            
+            ipoptStruct
             % Run IPOPT.
             try
                 [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);

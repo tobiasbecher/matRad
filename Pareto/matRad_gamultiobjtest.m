@@ -168,7 +168,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %%
 VOI = {'Skin','PTV'};
-returnStruct = matRad_paretoGeneration(dij,cst,pln,3,VOI);
+returnStruct = matRad_paretoGeneration(dij,cst,pln,50,VOI);
 %%
 weights = returnStruct.weights;
 %%
@@ -178,14 +178,21 @@ pln.propOpt.optimizer = 'gamultiobj';
 aaaaaaaaaaaaaaaaa
 
 %%
+returnStruct.VOIObj
+%%
+matRad_plotParetoSurface(returnStruct.finds,returnStruct.penGrid,returnStruct.VOIObj)
+%%
 %%
 %returnStruct = resultGUIs;
 %%
 %save('resultsGamultiNoPrecalculation.mat','returnStruct');
 %%
-ws = resultGUIs.xs;
-for i = 1:20
-    aaaa = matRad_calcCubes(transpose(ws(i,:)),dij);
+size(ws,1)
+%%
+ws= returnStruct.weights;
+%%
+for i = 1:size(ws,2)
+    aaaa = matRad_calcCubes(ws(:,i),dij);
     plane      = 3;
     slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
     figure,title('phantom plan')
@@ -194,7 +201,7 @@ for i = 1:20
     matRad_plotSliceWrapper(gca,ct,cst,1,aaaa.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 end
 
-               %% Plot the Resulting Dose Slice
+%% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
 
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);

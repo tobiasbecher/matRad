@@ -167,19 +167,19 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 VOI = {'Skin','PTV'};
 %%
 %objective function values are returned in order of ordering in VOI
-%returnStruct = matRad_paretoGeneration(dij,cst,pln,200,VOI);
+returnStruct = matRad_paretoGeneration(dij,cst,pln,200,VOI);
 %%
 aaaaaaaa
 %%
 %%
-%save('resultsLiver.mat','-v7.3','returnStruct');
-load('resultsTG119.mat')
+save('resultsLiverWarmStart200.mat','-v7.3','returnStruct');
+%load('resultsTG119.mat')
 %%
 %copy files so that if outliers should be removed it does not mess up the
 %whole dataset
-pensCopy = saveStruct.pen;
-findsCopy = saveStruct.finds;
-VOIObj = saveStruct.VOIObj;
+pensCopy = returnStruct.penGrid;
+findsCopy = returnStruct.finds;
+VOIObj = returnStruct.VOIObj;
 %%
 pensCopy(findsCopy(80,:)) = [];
 findsCopy(findsCopy(80,:)) = [];

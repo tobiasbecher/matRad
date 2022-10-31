@@ -170,10 +170,7 @@
 %     options.zl, options.zu, options.lambda
 %
 %     These fields specify the initial value for the Lagrange multipliers,
-%     which is especially useful for "warm starting" the interior-point
-%     solver. They specify the Lagrange multipliers corresponding to the
-%     lower bounds on the variables, upper bounds on the variables, and
-%     constraints, respectively.
+%     which is especially useful for "warm 
 %
 %     options.ipopt
 %

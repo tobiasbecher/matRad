@@ -292,6 +292,7 @@ end
 
 % PARETO PART
 %loop over VOI and get indices in cst file
+tic
 sizes = zeros(1,numel(VOIs));
 idxVOI = zeros(size(VOIs));
 VOIStr = convertCharsToStrings(VOIs);
@@ -329,8 +330,7 @@ for i = 1:size(pen{1},1)
     for j = 1:numel(idxVOI) %loop over indices
         
         for k = 1:size(pen{j},2)
-            cst{idxVOI(j),6}{k}.penalty
-            pen{j}(i,k)
+            cst{idxVOI(j),6}{k}.penalty;
             cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k);
         end
         
@@ -341,6 +341,13 @@ for i = 1:size(pen{1},1)
     wOpt = optimizer.wResult;
     info = optimizer.resultInfo;
     weights(:,i) = wOpt;
+    info
+    %set values for warm start
+    optimizer.optionsWarmStart.use      = true;
+    optimizer.optionsWarmStart.zl       = info.zl;
+    optimizer.optionsWarmStart.zu       = info.zu;
+    optimizer.optionsWarmStart.lambda   = info.lambda;
+    
 
     cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
     
@@ -357,14 +364,14 @@ for i = 1:size(pen{1},1)
     %figure(fig1), plot(fInd{1},fInd{2});
     %refreshdata
     %drawnow
-    'a'
     pause(1)
-    'b'
 end
+time = toc;
 returnStruct.weights = weights;
 returnStruct.finds = fInd;
 returnStruct.VOIObj = VOIObjNames;
 returnStruct.penGrid = penGrid;
 returnStruct.pen = pen;
+returnStruct.time = time;
 % unblock mex files
 clear mex

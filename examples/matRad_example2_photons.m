@@ -168,7 +168,9 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % the clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to 
 % visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);    
+aaaaaaaaaaaa
+%%
 matRadGUI;
 
 %% Plot the Resulting Dose Slice
