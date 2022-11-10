@@ -1,9 +1,11 @@
-function returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs,wInit)
+function returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs,wInit,penGrid,warmStart)
 % matRad inverse pareto planning wrapper function
 % 
 % call
-%   [resultGUI,optimizer] = matRad_paretoGeneration(dij,cst,pln,pen)
-%   [resultGUI,optimizer] = matRad_paretoGeneration(dij,cst,pln,pen,wInit)
+%   [returnStruct] = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs)
+%   [returnStruct] = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs,wInit)
+%   [returnStruct] = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs,wInit,penGrid)
+%   [returnStruct] = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs,wInit,penGrid,warmStart)
 %
 % input
 %   dij:        matRad dij struct
@@ -12,6 +14,10 @@ function returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs,wInit)
 %   nPoints:    Number of pareto optimal points
 %   VOIs:       Volumes for variation of penalties
 %   wInit:      (optional) custom weights to initialize problems
+%   penGrid:    (optional) precalculated array storing penalty Grid
+%   warmStart:  (optional) variable to indicate ipopt warmStart(default
+%   false)
+%   
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -34,8 +40,16 @@ function returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOIs,wInit)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+'AAAA'
 matRad_cfg = MatRad_Config.instance();
+
+if exist('warmStart','var') && warmStart == true
+    matRad_cfg.dispInfo('Using a warm start! ');
+    useWarmStart = true;
+else
+    matRad_cfg.dispInfo('Not using a warm start! ');
+    useWarmStart = false;
+end
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -101,7 +115,7 @@ wOnes          = ones(dij.totalNumOfBixels,1);
    
 % calculate initial beam intensities wInit
 matRad_cfg.dispInfo('Estimating initial weights... ');
-if exist('wInit','var')
+if exist('wInit','var') && ~isempty(wInit)
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');   
 elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
@@ -289,8 +303,7 @@ end
 
 %check that number of penalties equals number of constraints
 
-
-% PARETO PART
+%% PARETO PART
 %loop over VOI and get indices in cst file
 tic
 sizes = zeros(1,numel(VOIs));
@@ -315,15 +328,27 @@ end
 
 numOfObj = sum(sizes);
 fprintf('NumOfObj: %d \n',numOfObj);
-[pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,sizes);
+
+%create penalty values to loop over use precalculated ones
+if exist('penGrid','var') && ~isempty(penGrid)
+    assert(size(penGrid,1) == nPoints,'Size of penGrid not equal to nPoints!')
+    matRad_cfg.dispInfo('Using predefined penaltyGrid!\n'); 
+    pen = matRad_convertPenGridToCell(penGrid,sizes);
+else
+    matRad_cfg.dispInfo('Calculating penaltyGrid!\n'); 
+    [pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,sizes);
+end
+
 matRad_plotPenaltyGrid(penGrid);
 
+%predefine return values
 weights = zeros(numel(wInit),nPoints);
 fInd = zeros(nPoints,numOfObj);
 
+
 % loop over all penalty combinations
 for i = 1:size(pen{1},1)
-    fprintf('Iteration: %d \n',i);
+    fprintf('Now in Iteration: %d \n',i);
     
     % loop over structures of interest and update penValues
     % !only loops over structures with varying penalties so far!
@@ -341,24 +366,18 @@ for i = 1:size(pen{1},1)
     wOpt = optimizer.wResult;
     info = optimizer.resultInfo;
     weights(:,i) = wOpt;
-    info
     %set values for warm start
-    optimizer.optionsWarmStart.use      = true;
-    optimizer.optionsWarmStart.zl       = info.zl;
-    optimizer.optionsWarmStart.zu       = info.zu;
-    optimizer.optionsWarmStart.lambda   = info.lambda;
-    
-
-    cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
-    
-    fID  = 1;
-    %get the indivdual objective function values and return them all
-    for j = 1:numel(idxVOI)
-        for k = 1:size(pen{j},2)
-            fInd(i,fID) = cst{idxVOI(j),6}{k}.objValue;
-            fID = fID + 1;
-        end
+    if useWarmStart
+        optimizer.optionsWarmStart.use      = true;
+        optimizer.optionsWarmStart.zl       = info.zl;
+        optimizer.optionsWarmStart.zu       = info.zu;
+        optimizer.optionsWarmStart.lambda   = info.lambda;
     end
+
+    %cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
+    
+    %calculate all objective function values
+    fInd(i,:) = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
     %update initial weights
     wInit = wOpt;
     %figure(fig1), plot(fInd{1},fInd{2});

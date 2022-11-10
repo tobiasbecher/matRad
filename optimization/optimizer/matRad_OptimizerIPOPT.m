@@ -141,10 +141,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %warm start options
             if obj.optionsWarmStart.use == true
                 matRad_cfg.dispInfo('\nUsing a warm start! \n');
-                obj.options.warm_start_init_point         = 'yes';
-                ipoptStruct.zl = obj.optionsWarmStart.zl;
-                ipoptStruct.zu = obj.optionsWarmStart.zu;
-                ipoptStruct.lambda = obj.optionsWarmStart.lambda;
+                obj.options.warm_start_init_point   = 'yes';
+                ipoptStruct.zl      = obj.optionsWarmStart.zl;
+                ipoptStruct.zu      = obj.optionsWarmStart.zu;
+                ipoptStruct.lambda  = obj.optionsWarmStart.lambda;
             end
             
             ipoptStruct.ipopt = obj.options;

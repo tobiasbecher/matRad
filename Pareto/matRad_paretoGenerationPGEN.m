@@ -1,20 +1,23 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
-% matRad inverse planning wrapper function
+function returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOIs,wInit)
+% matRad inverse pareto planning wrapper function
 % 
 % call
-%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
-%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
+%   [resultGUI,optimizer] = matRad_paretoGeneration(dij,cst,pln,pen)
+%   [resultGUI,optimizer] = matRad_paretoGeneration(dij,cst,pln,pen,wInit)
 %
 % input
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
+%   nPoints:    Number of pareto optimal points
+%   VOIs:       Volumes for variation of penalties
 %   wInit:      (optional) custom weights to initialize problems
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   optimizer:  Used Optimizer Object
+%   fInd:       Array storing each individual final obj fnct value
 %
 % References
 %   -
@@ -59,6 +62,7 @@ for i = 1:size(cst,1)
         end
         
         obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        
         cst{i,6}{j} = obj;        
     end
 end
@@ -83,7 +87,7 @@ for i = 1:size(cst,1)
             dParams = fObjCell{1}.getDoseParameters();
             %Don't care for Inf constraints
             dParams = dParams(isfinite(dParams));
-            %Add do dose list
+            %Add to dose list
             fDoses = [fDoses dParams];
         end
                 
@@ -277,39 +281,138 @@ switch pln.propOpt.optimizer
     case 'IPOPT'
         optimizer = matRad_OptimizerIPOPT;
     case 'fmincon'
-        'using fmincon'
         optimizer = matRad_OptimizerFmincon;
-    %case 'gamultiobj'
-    %    optimizer = matRad_OptimizerGamultiobj;
     otherwise
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-       
-optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
-wOpt = optimizer.wResult;
-info = optimizer.resultInfo;
-
-resultGUI = matRad_calcCubes(wOpt,dij);
-resultGUI.wUnsequenced = wOpt;
-resultGUI.usedOptimizer = optimizer;
-resultGUI.info = info;
-resultGUI.optiProb = optiProb;
-cst{15,6}{1}.parameters
-resultGUI.individualObj = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
-%cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
+%check that number of penalties equals number of constraints
 
 
-%Robust quantities
-if FLAG_ROB_OPT || numel(ixForOpt) > 1   
-    Cnt = 1;
-    for i = find(~cellfun(@isempty,dij.physicalDose))'
-        tmpResultGUI = matRad_calcCubes(wOpt,dij,i);
-        resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
-        Cnt = Cnt + 1;
+% PARETO PART
+%loop over VOI and get indices in cst file
+tic
+sizes = zeros(1,numel(VOIs));
+idxVOI = zeros(size(VOIs));
+VOIStr = convertCharsToStrings(VOIs);
+VOIObjNames = [];
+
+%loop over VOI and associate to index in cst. Also Get number of obj
+%functions 
+for  i = 1:numel(VOIStr)
+    for j = 1:size(cst,1)
+        if VOIStr(i)== cst{j,2}
+            idxVOI(i) = j;
+            sizes(i) =  size(cst{j,6},2);
+            
+            for k = 1:size(cst{j,6},2)
+                name = VOIStr(i) + " " + convertCharsToStrings(cst{j,6}{k}.name);
+                VOIObjNames = [VOIObjNames name];
+            end
+        end 
     end
 end
 
+numOfObj = sum(sizes);
+fprintf('NumOfObj: %d \n',numOfObj);
+[pen,penGrid] = matRad_generatePGENGrid(sizes);
+matRad_plotPenaltyGrid(penGrid);
+
+weights = zeros(numel(wInit),size(penGrid,1));
+fInd = zeros(size(penGrid,1),numOfObj);
+fInd2 = zeros(size(penGrid,1),numOfObj);
+% loop over all penalty combinations
+for i = 1:size(pen{1},1)
+    fprintf('Iteration: %d \n',i);
+    
+    % loop over structures of interest and update penValues
+    % !only loops over structures with varying penalties so far!
+    for j = 1:numel(idxVOI) %loop over indices
+        
+        for k = 1:size(pen{j},2)
+            cst{idxVOI(j),6}{k}.penalty;
+            cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k);
+        end
+        
+    end
+    
+    
+    optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
+    wOpt = optimizer.wResult;
+    info = optimizer.resultInfo;
+    weights(:,i) = wOpt;
+    info
+    %set values for warm start
+    %optimizer.optionsWarmStart.use      = true;
+    %optimizer.optionsWarmStart.zl       = info.zl;
+    %optimizer.optionsWarmStart.zu       = info.zu;
+    %optimizer.optionsWarmStart.lambda   = info.lambda;
+    
+
+    cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
+    fID  = 1;
+    %get the indivdual objective function values and return them all
+    for j = 1:numel(idxVOI)
+        for k = 1:size(pen{j},2)
+            fInd(i,fID) = cst{idxVOI(j),6}{k}.objValue;
+ 
+            fID = fID + 1;
+        end
+    end
+    fIndv = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)
+    fInd2(i,:) = fIndv
+    %update initial weights
+    %wInit = wOpt;
+    %figure(fig1), plot(fInd{1},fInd{2});
+    %refreshdata
+    %drawnow
+    pause(1)
+end
+time = toc;
+%returnStruct.weights = weights;
+%returnStruct.finds = fInd;
+%returnStruct.finds2 = fInd2;
+returnStruct.VOIObj = VOIObjNames;
+returnStruct.penGrid = penGrid;
+returnStruct.pen = pen;
+returnStruct.time = time;
+%% Generaete further points
+figure
+matRad_plotParetoSurface(fInd,penGrid,VOIObjNames);
+for i=1:2  %temporary for loop
+ 
+    [a,b,c,d,dists,newPen] = matRad_convexHull(fInd,penGrid);
+    newPen
+    penGrid = [penGrid;newPen];
+    matRad_plotPenaltyGrid(penGrid);
+    
+    %update penalties TODO: NOT CONFORM WITH CELL ARRAY STRUCTURE OF
+    %PENGRID
+    pidx = 1;
+    for j = 1:numel(idxVOI) %loop over indices
+        
+        for k = 1:size(cst{idxVOI(j),6},2)
+            newPen(pidx)
+            cst{idxVOI(j),6}{k}.penalty = newPen(pidx)*1000;
+        end
+    end
+    
+    optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
+    wOpt = optimizer.wResult;
+    info = optimizer.resultInfo;
+    size(weights)
+    size(wOpt)
+    weights = [weights,wOpt];
+    fIndv = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)
+    fIndv 
+    fInd = [fInd;fIndv]
+    matRad_plotParetoSurface(fInd,penGrid,VOIObjNames);
+end
+
+returnStruct.weights = weights;
+returnStruct.finds = fInd;
+returnStruct.finds2 = fInd2;
+returnStruct.penGrid = penGrid;
 % unblock mex files
 clear mex

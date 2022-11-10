@@ -2,7 +2,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
 % matRad IPOPT objective function wrapper
 %
 % call
-%   f = matRad_objectiveFuncWrapper(optiProb,w,dij,cst)
+%   fInd     = matRad_objectiveFuncWrapper(optiProb,w,dij,cst)
 %
 % input
 %   optiProb: matRad optimization problem
@@ -12,7 +12,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
 %   scenario: index of dij scenario to consider (optional: default 1)
 %
 % output
-%   fINdv:    Array that stores all objective function values
+%   fIndv:    Array that stores all objective function values
 %
 % References
 %   -
