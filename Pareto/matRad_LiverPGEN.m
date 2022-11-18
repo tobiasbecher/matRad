@@ -27,8 +27,11 @@
 % search path.
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+%%
 load('Liver.mat');
 %%
+cst{15,6}{1}.parameters = 0;
+
 %% 
 % The file TG119.mat contains two Matlab variables. Let's check what we 
 % have just imported. First, the 'ct' variable comprises the ct cube along
@@ -45,21 +48,6 @@ display(ct);
 % column contains a linear index vector that lists all voxels belonging to 
 % a certain VOI.
 display(cst);
-%%
-% The fifth column represents meta parameters for optimization. The overlap
-% priority is used to resolve ambiguities of overlapping structures (voxels 
-% belonging to multiple structures will only be assigned to the VOI(s) with
-% the highest overlap priority, i.e.. the lowest value). The parameters 
-% alphaX and betaX correspond to the tissue's photon-radiosensitivity 
-% parameter of the linear quadratic model. These parameter are required for
-% biological treatment planning using a variable RBE. Let's output the meta 
-% optimization parameter of the target, which is stored in the thrid row:
-
-%% Treatment Plan
-% The next step is to define your treatment plan labeled as 'pln'. This 
-% matlab structure requires input from the treatment planner and defines 
-% the most important cornerstones of your treatment plan.
-
 %%
 % First of all, we need to define what kind of radiation modality we would
 % like to use. Possible values are photons, protons or carbon. In this case
@@ -164,23 +152,45 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % version easier to visualize, however harder to loop over
 VOI = {'Skin','PTV'};
 %%
+%objective function values are returned in order of ordering in VOI
+%returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
+%
+returnStruct2 = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
 %%
+aaaaaaaaaaaaaa
+
+%save('resultsLiverPGENExtensive.mat','-v7.3','returnStruct2');
+%%
+load('resultsLiverPGENExtensive.mat')
+returnStruct2.finds
+returnStruct2.penGrid
+%%
+penGrid = returnStruct2.penGrid;
+fInd = returnStruct2.finds;
+%%
+n = 3;
+fVals = fInd(1:n,:);
+penVals = penGrid(1:n,:);
+[k,facets,normals,cs,dists,w2] = matRad_convexHull(fVals,penVals);
+penVals
+w2
 %%
 
-%objective function values are returned in order of ordering in VOI
-returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
+n = 7;
+fVals = fInd(1:n,:);
+penVals = penGrid(1:n,:);
+[k,facets,normals,cs,dists,w2] = matRad_convexHull(fVals,penVals);
+penVals
+w2
 %%
+
+w2
 %%
-[returnStruct.penGrid,returnStruct.finds]
+penVals
 %%
-aaaaaaaa
-%%
-matRad_plotParetoSurface(returnStruct.finds,returnStruct.penGrid,returnStruct.VOIObj)
-%%
-%%
-[a,b,c,d,e.f] = matRad_convexHull(returnStruct.finds,returnStruct.penGrid)
-%%
-%%
+%for i = 1:size(k,1)
+    plot(fVals(k',1),fVals(k',2),'color','k')
+%end
 %%
 returnStruct2.finds
 returnStruct2.findsDirect

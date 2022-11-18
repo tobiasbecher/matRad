@@ -1,9 +1,8 @@
-function totDif = matRad_vectorDiff(wi,w)
+function totDif = matRad_vectorDiff(al,w)
 % matRad_function that calculates the total difference between a vector and
 % a matrix of vectors (stored as row vectors)
+    wi = (al*w);
     wDif = (w-wi).^2; %subtract vector from each row
-    wDif
-    totDif = sum(wDif,'all');
-    
-
+    wDif = sqrt(sum(wDif,2));
+    totDif = -1*sum(wDif,1);
 end

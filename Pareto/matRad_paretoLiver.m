@@ -28,9 +28,15 @@
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 load('Liver.mat');
+
+cst{15,6}{1}.parameters = 0;
 %%
-cst{16,6}{1} = DoseObjectives.matRad_SquaredUnderdosing(800,45); 
-cst{16,6}{2} = DoseObjectives.matRad_SquaredOverdosing(800,48); 
+%cst2 = cst;
+%cst{16,6}{1} = DoseObjectives.matRad_SquaredUnderdosing(800,45); 
+%cst{16,6}{2} = DoseObjectives.matRad_SquaredOverdosing(800,48); 
+
+%%
+%size(cst2{16,6},2)
 %% 
 % The file TG119.mat contains two Matlab variables. Let's check what we 
 % have just imported. First, the 'ct' variable comprises the ct cube along
@@ -164,56 +170,115 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % It is possible to have more than one objective function per VOI
 % penVal stores the Grid which is then passed on. penGrid contains an
 % version easier to visualize, however harder to loop over
+
+%%
+
 VOI = {'Skin','PTV'};
+nPoints = 20;
+[pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,[1,1]);
+%%
+matRad_plotPenaltyGrid(penGrid);
 %%
 %objective function values are returned in order of ordering in VOI
-returnStruct = matRad_paretoGeneration(dij,cst,pln,200,VOI);
+
+%returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid);
+returnStructWarm = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid,true);
+aaaaaaaaaaaaaaa
 %%
-aaaaaaaa
+%save('resultsLiverSqOD0.mat','-v7.3','returnStructWarm');
+%2save('resultsLiver2ObjColdStartTest2001000.mat','-v7.3','returnStruct');
+%load('resultsLiver2Obj20Warm.mat')
+%load('resultsLiverColdStartTest200.mat')
+%%
+%returnStructWarm = returnStructWarm1000
+%% Copy data so none is lost by accident
+pensCopyWarm = returnStructWarm.penGrid;
+
+pensCopyWarm = pensCopyWarm/1000;
+findsCopyWarm = returnStructWarm.finds;
+
+
+%pensCopyOneSided = returnStructOneSided.penGrid;
+%findsCopyOneSided = returnStructOneSided.finds;
+
+VOIObj = returnStructWarm.VOIObj;
+%%
+%penTest = [pensCopyWarm;penGridExtrem(2,:)/1000];
+%findsTest = [findsCopyWarm;returnStructExtrem.finds(2,:)];
+%%
+matRad_plotPenaltyGrid(pensCopyWarm)
+%%
+matRad_plotParetoSurface(findsCopyWarm,pensCopyWarm,VOIObj);
+%%
+matRad_plotNormals(findsCopyWarm,pensCopyWarm,VOIObj);
+%%
+matRad_plotParetoSurface(findsCopyWarm,pensCopyWarm,VOIObj)
+
+
+
+
+
+
+
+%%
+findsCopyWarm(1,1)
+%%
+
+[pensCopyWarm,findsCopyWarm]
+
+%%
+fVals = findsCopyWarm;
+L = min(fVals,[],1);
+U = max(fVals,[],1);
+fVals = (fVals-L)./(U-L)
+%%
+findsCopyWarm*1000
+%%
+findsCopyWarm(19,:)-findsCopyWarm(18,:)
 %%
 %%
-save('resultsLiverWarmStart200.mat','-v7.3','returnStruct');
-%load('resultsTG119.mat')
+
+weightsWarm = returnStructWarm.weights;
 %%
-%copy files so that if outliers should be removed it does not mess up the
-%whole dataset
-pensCopy = returnStruct.penGrid;
-findsCopy = returnStruct.finds;
-VOIObj = returnStruct.VOIObj;
-%%
-pensCopy(findsCopy(80,:)) = [];
-findsCopy(findsCopy(80,:)) = [];
-%%
-figure
-matRad_plotPenaltyGrid(pensCopy);
-%%
-'a'
-matRad_plotParetoSurface(findsCopy,pensCopy,VOIObj);
-%%
-fffffffffffffff
+matRad_plotPenaltyGrid(pensCopyWarm)
 %%
 %recalculate Plan from weights
-resultGUIs = cell(size(weights,1),1);
-for i = 1:20
-    w = weights(i,:);
-    resultGUIs{i} = matRad_calcCubes(transpose(w),dij);
+resultGUIsOneSided = cell(size(weightsWarm,1),1);
+for i =1:size(weightsWarm,2)
+    w = weightsWarm(:,i);
+    size(w)
+    resultGUIsOneSided{i} = matRad_calcCubes(w,dij);
+end
+
+%%
+resultGUIsWarm = cell(size(weightsCold,1),1);
+for i =1:size(weightsCold,2)
+    w = weightsWarm(:,i);
+    size(w)
+    resultGUIsWarm{i} = matRad_calcCubes(w,dij);
 end
 %%
-w = weights(1,:);
+[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIs{19});
 %%
-resultGUI = matRad_calcCubes(transpose(w),dij);
+fVals(1,:)
+%%
+pensCopyWarm(1,:)
+%%
+figure
+imagesc(resultGUIsOneSided{1}.physicalDose(:,:,slice)),colorbar, colormap(jet);
 %% Plot the Resulting Dose Slice
 
 % Let's plot the transversal iso-center dose slice
 
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-for i=1:20
+for i=1:size(weightsWarm,2)
     figure
-    imagesc(resultGUIs{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
+    imagesc(resultGUIsOneSided{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
 end
 %%
+figure
 'aaa'
 plane      = 3;
-absDiffCube = resultGUIs{2}.physicalDose-resultGUIs{1}.physicalDose;
+absDiffCube = resultGUIsOneSided {20}.physicalDose-resultGUIsOneSided{3}.physicalDose;
 figure,title( 'fine beam spacing plan - coarse beam spacing plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);

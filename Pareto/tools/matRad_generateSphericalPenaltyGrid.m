@@ -33,7 +33,7 @@ randNums= abs(normrnd(0,1,[nPoints,sum(sizes)]));
 r = sqrt(sum(randNums.^2,2));
 sample = randNums./r;
 sample = matRad_AdjustedTravellingSalesman(sample);
-
+sample = sample*1000;
 %generate cell array for easier looping
 penVal = cell(size(sizes));
 k = 1;

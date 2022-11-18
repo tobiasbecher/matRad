@@ -1,4 +1,4 @@
-function returnStruct = matRad_convexHullPlotHelper(fVals,facets,normals,weights,cs)
+function returnStruct = matRad_convexHullPlotHelper(fVals,facets,normals,weights,nw)
 % matRad inverse pareto planning wrapper function
 % 
 % call
@@ -20,37 +20,54 @@ function returnStruct = matRad_convexHullPlotHelper(fVals,facets,normals,weights
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [fVals,weights]
 figure
+plot(fVals(:,1),fVals(:,2),"diamond",color = "k");
+hold on 
 facets = facets(any(facets,2),:);
 normals = normals(any(normals,2),:);
 difs = fVals(facets(:,1),:)-fVals(facets(:,2),:);
 medians = fVals(facets(:,1),:)-1/2*difs;
 %%
-plot(medians(:,1),medians(:,2),'*');
-hold on 
-plot(fVals(:,1),fVals(:,2),'.');
-for i = 1:size(facets,1)
-    plot(fVals(facets,1),fVals(facets,2),'color','k')
-end
+plot(medians(:,1),medians(:,2),'*','HandleVisibility', 'off');
+plot(fVals(:,1),fVals(:,2),'.','HandleVisibility', 'off');
+plot(fVals(facets',1),fVals(facets',2),'color','k',DisplayName = 'Convex Hull',LineWidth = 1.3);
+
 
 %plot normals of convex hulls
 
 for i = 1:size(facets,1)
     normals(i,:)
     vec = [medians(i,:);medians(i,:)+normals(i,:)];
-    plot(vec(:,1),vec(:,2),'LineStyle',':','Color','r');
-    %plot(vec(:,1),vec(:,2));
-    ws = weights(facets(i,:),:);
-    ps = fVals(facets(i,:),:);
+    if i==1
+        plot(vec(:,1),vec(:,2),'LineStyle',':','Color','r',DisplayName = 'Facet normals');
+    else
+        plot(vec(:,1),vec(:,2),'LineStyle',':','Color','r','HandleVisibility', 'off');
+    end
 end
+%%
+
+nidx = find(ismember(normals, nw,'rows'))
+vec = [medians(nidx,:);medians(nidx,:)+normals(nidx,:)];
+plot(vec(:,1),vec(:,2),'LineStyle','-','Color','r',DisplayName = 'Next normal',LineWidth = 2);
+
 %%
 %
 
 for i = 1:size(fVals,1)
     pts = [fVals(i,:);fVals(i,:)+weights(i,:)];
-    plot(pts(:,1),pts(:,2),'LineStyle','-.','Color','b')
+    
     wPlane = fliplr(weights);
     wPlane(:,1) = wPlane(:,1)*(-1);
     ptwPlane = [fVals(i,:);fVals(i,:)+wPlane(i,:);fVals(i,:)-wPlane(i,:),];
-    plot(ptwPlane(:,1),ptwPlane(:,2),'LineStyle','--','Color','g')
+    if i==1
+        plot(pts(:,1),pts(:,2),'LineStyle','-.','Color','b', DisplayName = 'Penalty vectors')
+        plot(ptwPlane(:,1),ptwPlane(:,2),'LineStyle','--','Color','g',DisplayName = 'Lower Boundary')
+    else
+        plot(pts(:,1),pts(:,2),'LineStyle','-.','Color','b', 'HandleVisibility', 'off')
+        plot(ptwPlane(:,1),ptwPlane(:,2),'LineStyle','--','Color','g','HandleVisibility', 'off')
+    end
 end
+%%
+
+
+legend()
 %}

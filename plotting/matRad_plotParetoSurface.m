@@ -33,7 +33,7 @@ function matRad_plotParetoSurface(fInd,penGrid,VOIObj)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%fig2 = figure;
+fig2 = figure;
 switch size(fInd,2)
     case 2
         penGrid = [penGrid,zeros(size(penGrid,1),1)];

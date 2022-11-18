@@ -296,8 +296,8 @@ resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 resultGUI.optiProb = optiProb;
-cst{15,6}{1}.parameters
 resultGUI.individualObj = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
+matRad_objectiveFunctions(optiProb,wOpt,dij,cst)
 %cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
 
 

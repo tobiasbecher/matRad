@@ -58,18 +58,15 @@ f_COWC = zeros(numel(useScen),1);
 
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)
-    
     % Only take OAR or target VOI.
     if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
         
         % loop over the number of constraints for the current VOI
         for j = 1:numel(cst{i,6})
-            
             objective = cst{i,6}{j};
             
             % only perform gradient computations for objectiveectives
             if isa(objective,'DoseObjectives.matRad_DoseObjective')
-                
                 % rescale dose parameters to biological optimization quantity if required
                 objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
                 

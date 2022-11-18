@@ -179,7 +179,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultFineSamplingProperties.N = 21;
             obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
             
-            obj.propOpt.defaultMaxIter = 700;
+            obj.propOpt.defaultMaxIter = 1000;
             
             obj.propMC.ompMC_defaultHistories = 1e6;
             obj.propMC.ompMC_defaultOutputVariance = false;          

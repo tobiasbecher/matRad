@@ -1,9 +1,10 @@
-function wmin = matRad_maximallyDifferent(pens)
+function wmin = matRad_maximallyDifferent(pens,w0)
 % matRad function that creates a penalty vector maximally different to other
 % vectors of a facet
 %
 % input
-%   pens:       Matrix storing the penalty values of the facet   
+%   pens:       Matrix storing the penalty values of the facet
+%   w0:         Initial point (could be initialize
 %
 % output
 %   wmin:       Maximally different vector
@@ -20,4 +21,10 @@ function wmin = matRad_maximallyDifferent(pens)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-@(wi) matRad(wi,w),...
+lb = zeros(1,size(pens,1));
+ub = ones(1,size(pens,1));
+wmin = fmincon(@(al) matRad_vectorDiff(al,pens),...
+                w0,... % Starting Point
+                [],[],...% Linear Constraints: sum(al)=1;
+                [1,1],1,... % Also no linear inequality constraints
+                lb,ub);

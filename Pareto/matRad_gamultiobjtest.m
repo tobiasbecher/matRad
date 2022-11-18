@@ -167,45 +167,69 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % version easier to visualize, however harder to loop over
 
 %%
+tic
+nPoints =30;
 VOI = {'Skin','PTV'};
-returnStruct = matRad_paretoGeneration(dij,cst,pln,50,VOI);
+returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],[],true);
 %%
+% reshuffle weights, so that they are without order
+perms = randperm(nPoints);
 weights = returnStruct.weights;
+weightsShuffled = weights(:,perms); 
+
 %%
-pln.propOpt.optimizer = 'gamultiobj';
-[resultGUIs,opts,cst] = matRad_gamultobjopt(dij,cst,pln,weights);
+returnStruct
+%%
+size(weights,2)
+%%
+resultGUIsAll = cell(size(weights,2),1);
+n = 1;
+for i = (5:5:nPoints)
+    pln.propOpt.optimizer = 'gamultiobj';
+    [resultGUIs,opts] = matRad_gamultobjopt(dij,cst,pln,weightsShuffled(:,1:i));
+    resultGUIsAll{n} = resultGUIs;
+    n = n+1;
+end
+
+tend = toc
 %%
 aaaaaaaaaaaaaaaaa
 
 %%
 returnStruct.VOIObj
 %%
+ws = resultGUIs.xs;
+%%
+
+%%
 matRad_plotParetoSurface(returnStruct.finds,returnStruct.penGrid,returnStruct.VOIObj)
-%%
-%%
-%returnStruct = resultGUIs;
-%%
-%save('resultsGamultiNoPrecalculation.mat','returnStruct');
 %%
 size(ws,1)
 %%
-ws= returnStruct.weights;
+%ws= returnStruct.weights;
+%
+
+
 %%
-for i = 1:size(ws,2)
-    aaaa = matRad_calcCubes(ws(:,i),dij);
-    plane      = 3;
-    slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-    figure,title('phantom plan')
-
-    doseWindow = [0 max([aaaa.physicalDose(:)])];
-    matRad_plotSliceWrapper(gca,ct,cst,1,aaaa.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+resultGUIsWarm = cell(size(ws,1),1);
+for i =1:5:size(ws,1)
+    w = ws(i,:);
+    size(w)
+    resultGUIsWarm{i} = matRad_calcCubes(w',dij);
 end
+%%
 
+%%
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+for i=1:5:size(ws,1)
+    figure
+    imagesc(resultGUIsWarm{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
+end
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
 
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-for i=1:size(resultGUIs,1)
+for i=1:5:size(resultGUIs,1)
     figure
     imagesc(resultGUIs{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
 end
