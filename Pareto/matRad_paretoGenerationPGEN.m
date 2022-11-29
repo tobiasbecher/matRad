@@ -332,7 +332,7 @@ for i = 1:size(pen{1},1)
         
         for k = 1:size(pen{j},2)
             cst{idxVOI(j),6}{k}.penalty;
-            cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k)*1000;
+            cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k)*100;
         end
         
     end
@@ -380,7 +380,7 @@ returnStruct.time = time;
 %% Generaete further points
 figure
 matRad_plotParetoSurface(fInd,penGrid,VOIObjNames);
-for i=1:5 %temporary for loop TODO: Use while loop that terminates after hitting distance (tbd)
+for i=1:10 %temporary for loop TODO: Use while loop that terminates after hitting distance (tbd)
  
     [a,b,c,d,dists,newPen] = matRad_convexHull(fInd,penGrid);
     newPen
@@ -395,7 +395,7 @@ for i=1:5 %temporary for loop TODO: Use while loop that terminates after hitting
         for k = 1:size(cst{idxVOI(j),6},2)
             ff = newPen(pidx);
             ff
-            cst{idxVOI(j),6}{k}.penalty = newPen(pidx)*1000;
+            cst{idxVOI(j),6}{k}.penalty = newPen(pidx)*100;
             hh = cst{idxVOI(j),6}{k}.penalty;
             pidx = pidx+1;
         end
@@ -409,7 +409,13 @@ for i=1:5 %temporary for loop TODO: Use while loop that terminates after hitting
     fIndv = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)
     fInd = [fInd;fIndv]
     fprintf('fInd%d\n',fInd);
-    matRad_plotParetoSurface(fInd,penGrid,VOIObjNames);
+    
+    %warm start block
+    optimizer.optionsWarmStart.use      = true;
+    optimizer.optionsWarmStart.zl       = info.zl;
+    optimizer.optionsWarmStart.zu       = info.zu;
+    optimizer.optionsWarmStart.lambda   = info.lambda;
+    %matRad_plotParetoSurface(fInd,penGrid,VOIObjNames);
 end
 
 returnStruct.weights = weights;

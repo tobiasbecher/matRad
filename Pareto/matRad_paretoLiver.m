@@ -29,8 +29,9 @@
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 load('Liver.mat');
 
-cst{15,6}{1}.parameters = 0;
-%%
+cst{15,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(0,0));
+cst{16,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(100,45));
+%%  
 %cst2 = cst;
 %cst{16,6}{1} = DoseObjectives.matRad_SquaredUnderdosing(800,45); 
 %cst{16,6}{2} = DoseObjectives.matRad_SquaredOverdosing(800,48); 
@@ -170,77 +171,94 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % It is possible to have more than one objective function per VOI
 % penVal stores the Grid which is then passed on. penGrid contains an
 % version easier to visualize, however harder to loop over
-
 %%
-
+%[resultGUI2,o,wSt] = matRad_fluenceOptimization(dij,cst,pln);    
+%%
 VOI = {'Skin','PTV'};
 nPoints = 20;
 [pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,[1,1]);
 %%
-matRad_plotPenaltyGrid(penGrid);
+%matRad_plotPenaltyGrid(penGrid);
+
+%%
+penGrid = [[100,0];[0,100];penGrid]%;[0.9999,sqrt(1-0.9999^2)];[0.99999,sqrt(1-0.99999^2)]]*100;
+%%
+%%
 %%
 %objective function values are returned in order of ordering in VOI
+nPoints = 22;
+%returnStruct = matRad_paretoGeneration(dij,,pln,nPoints,VOI,[],penGrid);
 
-%returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid);
+returnStructCold = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid);
 returnStructWarm = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid,true);
-aaaaaaaaaaaaaaa
+aaaaa
 %%
-%save('resultsLiverSqOD0.mat','-v7.3','returnStructWarm');
-%2save('resultsLiver2ObjColdStartTest2001000.mat','-v7.3','returnStruct');
-%load('resultsLiver2Obj20Warm.mat')
-%load('resultsLiverColdStartTest200.mat')
+returnStruct4.finds(4)
 %%
-%returnStructWarm = returnStructWarm1000
-%% Copy data so none is lost by accident
-pensCopyWarm = returnStructWarm.penGrid;
-
-pensCopyWarm = pensCopyWarm/1000;
-findsCopyWarm = returnStructWarm.finds;
-
-
-%pensCopyOneSided = returnStructOneSided.penGrid;
-%findsCopyOneSided = returnStructOneSided.finds;
-
-VOIObj = returnStructWarm.VOIObj;
+[returnStruct3.weights(:,2),returnStruct2.weights(:,2)]
 %%
-%penTest = [pensCopyWarm;penGridExtrem(2,:)/1000];
-%findsTest = [findsCopyWarm;returnStructExtrem.finds(2,:)];
+resultGUI2.individualObj(2)
 %%
-matRad_plotPenaltyGrid(pensCopyWarm)
+returnStruct1.finds(2)
 %%
-matRad_plotParetoSurface(findsCopyWarm,pensCopyWarm,VOIObj);
+returnStruct1.wInit(1)
 %%
-matRad_plotNormals(findsCopyWarm,pensCopyWarm,VOIObj);
+aaaaa
 %%
-matRad_plotParetoSurface(findsCopyWarm,pensCopyWarm,VOIObj)
-
-
-
-
-
-
+returnStructWarmSq0.finds(6)
+%%
+matRad_plotParetoSurface(returnStructWarmSq0.finds,returnStructWarmSq0.penGrid/100,returnStructWarmSq0.VOIObj);
 
 %%
-findsCopyWarm(1,1)
+aaaa
+%%
+load('resultsLiverSqOD0LinObjAll.mat')
+load('resultsLiverSqOD0All.mat')
+%%
+penLin = returnStructAllLin0.penGrid;
+penSq = returnStructAllSq0.penGrid;
+findsLin = returnStructAllLin0.finds;
+findsSq = returnStructAllSq0.finds;
+VOIObjLin = returnStructAllLin0.VOIObj;
+VOIObjSq = returnStructAllSq0.VOIObj;
+%%
+%load('resultsLiverPGENExtensive.mat')
+%save('resultsLiverSqOD0LinObjAll.mat','-v7.3','returnStructAllLin0');
+%load('resultsLiverSqOD0All.mat')
+%load('resultsLiverSqOD0.mat');
+%%
+matRad_plotParetoSurface(returnStruct2.finds,returnStruct2.penGrid,returnStruct2.VOIObj);
+
+%%
+matRad_plotParetoSurface(returnStructAllSq0.finds,returnStructAllSq0.penGrid/100,returnStructAllSq0.VOIObj);
+
+%%
+matRad_plotParetoSurface(findsLin,penLin/100,VOIObjLin)
 %%
 
-[pensCopyWarm,findsCopyWarm]
-
+matRad_plotParetoSurface(findsSq,penSq/100,VOIObjSq)
 %%
-fVals = findsCopyWarm;
-L = min(fVals,[],1);
-U = max(fVals,[],1);
-fVals = (fVals-L)./(U-L)
+figure
+plot(findsLin(:,1).^2,findsLin(:,2).^2,'.',color = 'r')
+hold on 
+plot(findsSq(:,1),findsSq(:,2),'.',color = 'b')
 %%
-findsCopyWarm*1000
+%load('resultsLiverPGEN2ObjectivesSqObj0D.mat')
 %%
-findsCopyWarm(19,:)-findsCopyWarm(18,:)
-%%
+returnStruct2.finds
 %%
 
-weightsWarm = returnStructWarm.weights;
+matRad_plotParetoSurface([findsSq;returnStruct2.finds],[penSq/100;returnStruct2.penGrid],returnStruct2.VOIObj)
+
+
+
+
+
 %%
-matRad_plotPenaltyGrid(pensCopyWarm)
+resultGUI = matRad_calcCubes(returnStruct2.weights(:,2),dij);
+resultGUI2 = matRad_calcCubes(returnStruct3.weights(:,2),dij);
+%%
+resultGUI3 = matRad_calcCubes(returnStruct4.weights(:,2),dij);
 %%
 %recalculate Plan from weights
 resultGUIsOneSided = cell(size(weightsWarm,1),1);
@@ -260,10 +278,6 @@ end
 %%
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIs{19});
 %%
-fVals(1,:)
-%%
-pensCopyWarm(1,:)
-%%
 figure
 imagesc(resultGUIsOneSided{1}.physicalDose(:,:,slice)),colorbar, colormap(jet);
 %% Plot the Resulting Dose Slice
@@ -271,6 +285,7 @@ imagesc(resultGUIsOneSided{1}.physicalDose(:,:,slice)),colorbar, colormap(jet);
 % Let's plot the transversal iso-center dose slice
 
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+%%
 for i=1:size(weightsWarm,2)
     figure
     imagesc(resultGUIsOneSided{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
@@ -279,6 +294,6 @@ end
 figure
 'aaa'
 plane      = 3;
-absDiffCube = resultGUIsOneSided {20}.physicalDose-resultGUIsOneSided{3}.physicalDose;
+absDiffCube = resultGUI3.physicalDose-resultGUI.physicalDose;
 figure,title( 'fine beam spacing plan - coarse beam spacing plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);

@@ -285,7 +285,6 @@ switch pln.propOpt.optimizer
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-       
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;
@@ -297,7 +296,8 @@ resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 resultGUI.optiProb = optiProb;
 resultGUI.individualObj = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
-matRad_objectiveFunctions(optiProb,wOpt,dij,cst)
+ff = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)
+ff(2)
 %cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
 
 

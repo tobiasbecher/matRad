@@ -30,8 +30,8 @@ matRad_rc; %If this throws an error, run it from the parent directory first to s
 %%
 load('Liver.mat');
 %%
-cst{15,6}{1}.parameters = 0;
-
+%cst{15,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(300,0));
+%cst{16,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(1000,45));
 %% 
 % The file TG119.mat contains two Matlab variables. Let's check what we 
 % have just imported. First, the 'ct' variable comprises the ct cube along
@@ -157,16 +157,46 @@ VOI = {'Skin','PTV'};
 %
 returnStruct2 = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
 %%
-aaaaaaaaaaaaaa
-
-%save('resultsLiverPGENExtensive.mat','-v7.3','returnStruct2');
+returnStruct2
 %%
-load('resultsLiverPGENExtensive.mat')
+matRad_plotParetoSurface(returnStruct2.finds(1:i,:),returnStruct2.penGrid(1:i,:),VOI)
+
+%%
+
+i = 5
+a = matRad_convexHull(returnStruct2.finds(1:i,:),returnStruct2.penGrid(1:i,:))
+%%
+%returnStruct2.penGrid
+returnStruct2.finds
+
+%%
+returnStructAllSq0.penGrid
+%%
+aaaaaaaaaaaaaa
+%%
+returnStructLiverPGEN2LinObj0 = returnStruct2
+%save('resultsLiverPGEN2ObjectivesLinObj0D.mat','-v7.3','returnStructLiverPGEN2LinObj0');
+%%
+load('resultsLiverSqOD0All.mat')
+%%
+
+matRad_plotParetoSurface(returnStructAllSq0.finds,returnStructAllSq0.penGrid/100,returnStructAllSq0.VOIObj)
+%%
+matRad_plotParetoSurface(returnStruct2.finds,returnStruct2.penGrid,returnStruct2.VOIObj)
+%%
+size(returnStructWarm.penGrid)
+%%
+%save('resultsLiverPGEN2ObjectivesSqObj0D.mat','-v7.3','returnStruct2');
+%%%load('resultsLiverPGENExtensive.mat')
 returnStruct2.finds
 returnStruct2.penGrid
 %%
+%%
 penGrid = returnStruct2.penGrid;
 fInd = returnStruct2.finds;
+VOIObj = returnStruct2.VOIObj;
+%%
+matRad_plotParetoSurface(fInd,penGrid,VOIObj)
 %%
 n = 3;
 fVals = fInd(1:n,:);

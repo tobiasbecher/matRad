@@ -84,7 +84,7 @@ for i = 1:size(k,1)
     %intersection?
     LDP= linsolve(ws,rs);
     %check that LDP is in bounding box of of PS, if not ignore facet
-    if all(LDP<=ones(size(LDP))) && all(LDP>=zeros(size(LDP)))
+    if all(LDP<=ones(size(LDP))) && all(LDP>=zeros(size(LDP))) && (((refPoint-LDP')*normal) > 0)
         %% Step 5 Distance of LDP to upper bound
         dist = abs(LDP'*normal-c); % c: constant of upper bound
         facets(i,:) = k(i,:);
@@ -93,7 +93,6 @@ for i = 1:size(k,1)
         dists(i,1) = dist; 
     end
 end
-%% TO BE REMOVED 
 %% Step 6: Find new facet to run
 %[argval,idx] = max(dists);
 [A,I] = sort(dists,'descend');

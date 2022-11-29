@@ -40,6 +40,8 @@ switch size(fInd,2)
         scatter(fInd(:,1),fInd(:,2),[],penGrid,'filled')
         xlabel("x: " + VOIObj(1));
         ylabel("y: " + VOIObj(2));
+        %set(gca,'Xscale','log')
+        %set(gca,'Yscale','log') 
     case 3
         scatter3(fInd(:,1),fInd(:,2),fInd(:,3),[], penGrid,'filled')
         xlabel("x: " + VOIObj(1));

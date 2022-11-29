@@ -355,12 +355,13 @@ for i = 1:size(pen{1},1)
     for j = 1:numel(idxVOI) %loop over indices
         
         for k = 1:size(pen{j},2)
+            
             cst{idxVOI(j),6}{k}.penalty;
             cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k);
+            cst{idxVOI(j),6}{k}
         end
         
     end
-    
     
     optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
     wOpt = optimizer.wResult;
@@ -392,5 +393,7 @@ returnStruct.VOIObj = VOIObjNames;
 returnStruct.penGrid = penGrid;
 returnStruct.pen = pen;
 returnStruct.time = time;
+returnStruct.wInit = wInit;
+
 % unblock mex files
 clear mex
