@@ -360,7 +360,7 @@ matRad_plotPenaltyGrid(penGrid);
 
 %predefine return values
 weights = zeros(numel(wInit),nPoints);
-fInd = zeros(nPoints,numOfObj);
+fInd = zeros(nPoints,numOfObj); %TO BE REMOVED
 
 
 % loop over all penalty combinations
@@ -371,7 +371,7 @@ for i = 1:size(pen{1},1)
     % !only loops over structures with varying penalties so far!
     for j = 1:numel(idxVOI) %loop over indices
         for k = 1:size(pen{j},2)
-            if contains(class(cst{j,6}{k}),'DoseObjectives') % only consider objectives, not constraints
+            if contains(class(cst{idxVOI(j),6}{k}),'DoseObjectives') % only consider objectives, not constraints
                 cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k);
             end
         end
@@ -393,7 +393,11 @@ for i = 1:size(pen{1},1)
     %cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
     
     %calculate all objective function values
-    fInd(i,:) = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
+    %cst2 = cst;
+    %cst2{2,6}{1} = cst{2,6}{1}.objective;
+    
+    %fInd(i,:) = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
+    fInd(i,:) = matRad_objectiveFunctionsConstraints(optiProb,wOpt,dij,cst);
     %update initial weights
     wInit = wOpt;
     %figure(fig1), plot(fInd{1},fInd{2});
