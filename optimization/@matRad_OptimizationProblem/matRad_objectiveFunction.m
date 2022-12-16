@@ -73,130 +73,132 @@ for  i = 1:size(cst,1)
                 
                 % retrieve the robustness type
                 robustness = objective.robustness;
-                
-                switch robustness
-                    case 'none' % if conventional opt: just sum objectives of nominal dose
-                        for ixScen = useScen
-                            d_i = d{ixScen}(cst{i,4}{useScen(1)});
-                            f = f + objective.penalty * objective.penalty*objective.computeDoseObjectiveFunction(d_i);
-                        end
-                        
-                    case 'STOCH' % if prob opt: sum up expectation value of objectives
-                        for s = 1:numel(useScen)
-                            ixScen = useScen(s);
-                            ixContour = contourScen(s);
-                            
-                            d_i = d{ixScen}(cst{i,4}{ixContour});
-                            
-                            f   = f + scenProb(s) * objective.penalty*objective.computeDoseObjectiveFunction(d_i);
-                            
-                        end
-                        
-                    case 'PROB' % if prob opt: sum up expectation value of objectives
-                        
-                        d_i = dExp{1}(cst{i,4}{1});
-                        
-                        f   = f +  objective.penalty*objective.computeDoseObjectiveFunction(d_i);
-                        
-                        p = objective.penalty/numel(cst{i,4}{1});
-                        
-                        % only one variance term per VOI
-                        if j == 1
-                            f = f + p * w' * dOmega{i,1};
-                        end
-                        
-                    case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
-                        contourIx = unique(contourScen);
-                        if ~isscalar(contourIx)
-                            % voxels need to be tracked through the 4D CT,
-                            % not yet implemented
-                            matRad_cfg.dispError('4D VWWC optimization is currently not supported');
-                        end
-                        
-                        % prepare min/max dose vector
-                        if ~exist('d_tmp','var')
-                            d_tmp = [d{useScen}];
-                        end
-                        
-                        d_Scen = d_tmp(cst{i,4}{contourIx},:);
-                        
-                        d_max = max(d_Scen,[],2);
-                        d_min = min(d_Scen,[],2);
-                        
-                        if isequal(cst{i,3},'OAR')
-                            d_i = d_max;
-                        elseif isequal(cst{i,3},'TARGET')
-                            d_i = d_min;
-                        end
-                        
-                        f = f + objective.penalty*objective.computeDoseObjectiveFunction(d_i);
-                        
-                    case 'VWWC_INV'  %inverse voxel-wise conformitiy - consider the maximum and minimum dose in the target and optimize the dose conformity
-                        contourIx = unique(contourScen);
-                        if ~isscalar(contourIx)
-                            % voxels need to be tracked through the 4D CT,
-                            % not yet implemented
-                            matRad_cfg.dispWarning('4D inverted VWWC optimization is currently not supported');
-                        end
-                        
-                        % prepare min/max dose vector
-                        if ~exist('d_tmp','var')
-                            d_tmp = [d{useScen}];
-                        end
-                        
-                        d_Scen = d_tmp(cst{i,4}{contourIx},:);
-                        d_max = max(d_Scen,[],2);
-                        d_min = min(d_Scen,[],2);
-                        
-                        if isequal(cst{i,3},'OAR')
-                            d_i = d_min;
-                        elseif isequal(cst{i,3},'TARGET')
-                            d_i = d_max;
-                        end
-                        
-                        f = f + objective.penalty*objective.computeDoseObjectiveFunction(d_i);
-                        
-                    case 'COWC'  % composite worst case consideres ovarall the worst objective function value
-                        
-                        for s = 1:numel(useScen)
-                            ixScen = useScen(s);
-                            ixContour = contourScen(s);
-                            
-                            d_i = d{ixScen}(cst{i,4}{ixContour});
-                            
-                            f_COWC(s) = f_COWC(s) + objective.penalty*objective.computeDoseObjectiveFunction(d_i);
-                        end
-                        
-                    case 'OWC'   % objective-wise worst case considers the worst individual objective function value
-                        
-                        f_OWC = zeros(numel(useScen),1);
-                        
-                        for s = 1:numel(useScen)
-                            ixScen    = useScen(s);
-                            ixContour = contourScen(s);
-                            
-                            d_i = d{ixScen}(cst{i,4}{ixContour});
-                            f_OWC(s) = objective.penalty*objective.computeDoseObjectiveFunction(d_i);
-                        end
-                        
-                        % compute the maximum objective function value
-                        switch optiProb.useMaxApprox
-                            case 'logsumexp'
-                                fMax = optiProb.logSumExp(f_OWC);
-                            case 'pnorm'
-                                fMax = optiProb.pNorm(f_OWC,numel(useScen));
-                            case 'none'
-                                fMax = max(f_OWC);
-                            case 'otherwise'
-                                matRad_cfg.dispWarning('Unknown maximum approximation desired. Using ''none'' instead.');
-                                fMax = max(f_OWC);
-                        end
-                        f = f + fMax;
-                        
-                    otherwise
-                        matRad_cfg.dispError('Robustness setting %s not supported!',objective.robustness);
-                        
-                end  %robustness type                              
+                if objective.penalty ~= 0 % TEMPORARY ADDITION
+                    switch robustness
+                        case 'none' % if conventional opt: just sum objectives of nominal dose
+                            for ixScen = useScen
+                                d_i = d{ixScen}(cst{i,4}{useScen(1)});
+
+                                f = f + objective.penalty * objective.penalty*objective.computeDoseObjectiveFunction(d_i);
+
+                            end
+
+                        case 'STOCH' % if prob opt: sum up expectation value of objectives
+                            for s = 1:numel(useScen)
+                                ixScen = useScen(s);
+                                ixContour = contourScen(s);
+
+                                d_i = d{ixScen}(cst{i,4}{ixContour});
+
+                                f   = f + scenProb(s) * objective.penalty*objective.computeDoseObjectiveFunction(d_i);
+
+                            end
+
+                        case 'PROB' % if prob opt: sum up expectation value of objectives
+
+                            d_i = dExp{1}(cst{i,4}{1});
+
+                            f   = f +  objective.penalty*objective.computeDoseObjectiveFunction(d_i);
+
+                            p = objective.penalty/numel(cst{i,4}{1});
+
+                            % only one variance term per VOI
+                            if j == 1
+                                f = f + p * w' * dOmega{i,1};
+                            end
+
+                        case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
+                            contourIx = unique(contourScen);
+                            if ~isscalar(contourIx)
+                                % voxels need to be tracked through the 4D CT,
+                                % not yet implemented
+                                matRad_cfg.dispError('4D VWWC optimization is currently not supported');
+                            end
+
+                            % prepare min/max dose vector
+                            if ~exist('d_tmp','var')
+                                d_tmp = [d{useScen}];
+                            end
+
+                            d_Scen = d_tmp(cst{i,4}{contourIx},:);
+
+                            d_max = max(d_Scen,[],2);
+                            d_min = min(d_Scen,[],2);
+
+                            if isequal(cst{i,3},'OAR')
+                                d_i = d_max;
+                            elseif isequal(cst{i,3},'TARGET')
+                                d_i = d_min;
+                            end
+
+                            f = f + objective.penalty*objective.computeDoseObjectiveFunction(d_i);
+
+                        case 'VWWC_INV'  %inverse voxel-wise conformitiy - consider the maximum and minimum dose in the target and optimize the dose conformity
+                            contourIx = unique(contourScen);
+                            if ~isscalar(contourIx)
+                                % voxels need to be tracked through the 4D CT,
+                                % not yet implemented
+                                matRad_cfg.dispWarning('4D inverted VWWC optimization is currently not supported');
+                            end
+
+                            % prepare min/max dose vector
+                            if ~exist('d_tmp','var')
+                                d_tmp = [d{useScen}];
+                            end
+
+                            d_Scen = d_tmp(cst{i,4}{contourIx},:);
+                            d_max = max(d_Scen,[],2);
+                            d_min = min(d_Scen,[],2);
+
+                            if isequal(cst{i,3},'OAR')
+                                d_i = d_min;
+                            elseif isequal(cst{i,3},'TARGET')
+                                d_i = d_max;
+                            end
+
+                            f = f + objective.penalty*objective.computeDoseObjectiveFunction(d_i);
+
+                        case 'COWC'  % composite worst case consideres ovarall the worst objective function value
+
+                            for s = 1:numel(useScen)
+                                ixScen = useScen(s);
+                                ixContour = contourScen(s);
+
+                                d_i = d{ixScen}(cst{i,4}{ixContour});
+
+                                f_COWC(s) = f_COWC(s) + objective.penalty*objective.computeDoseObjectiveFunction(d_i);
+                            end
+
+                        case 'OWC'   % objective-wise worst case considers the worst individual objective function value
+
+                            f_OWC = zeros(numel(useScen),1);
+
+                            for s = 1:numel(useScen)
+                                ixScen    = useScen(s);
+                                ixContour = contourScen(s);
+
+                                d_i = d{ixScen}(cst{i,4}{ixContour});
+                                f_OWC(s) = objective.penalty*objective.computeDoseObjectiveFunction(d_i);
+                            end
+
+                            % compute the maximum objective function value
+                            switch optiProb.useMaxApprox
+                                case 'logsumexp'
+                                    fMax = optiProb.logSumExp(f_OWC);
+                                case 'pnorm'
+                                    fMax = optiProb.pNorm(f_OWC,numel(useScen));
+                                case 'none'
+                                    fMax = max(f_OWC);
+                                case 'otherwise'
+                                    matRad_cfg.dispWarning('Unknown maximum approximation desired. Using ''none'' instead.');
+                                    fMax = max(f_OWC);
+                            end
+                            f = f + fMax;
+
+                        otherwise
+                            matRad_cfg.dispError('Robustness setting %s not supported!',objective.robustness);
+                    end%robustness type
+                end                                
             end  % objective check         
         end %objective loop       
     end %empty check    

@@ -206,7 +206,8 @@ if isa(optiProb.BP,'matRad_DoseProjection')
 elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
    
    if ~isempty(DoseProjection{scenario})
-      jacob = DoseProjection{scenario}' * dij.RBE * dij.physicalDose{scenario};
+      %jacob = DoseProjection{scenario}' * dij.RBE * dij.physicalDose{scenario};
+      jacob = dij.RBE * (DoseProjection{scenario}' * dij.physicalDose{scenario});
    end
    
 elseif isa(optiProb.BP,'matRad_EffectProjection')

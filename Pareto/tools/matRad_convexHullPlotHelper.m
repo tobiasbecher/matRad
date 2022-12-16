@@ -18,24 +18,29 @@ function returnStruct = matRad_convexHullPlotHelper(fVals,facets,normals,weights
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[fVals,weights]
-figure
+[fVals,weights];
+[k,vol] = convhulln(fVals);
+figure;
 plot(fVals(:,1),fVals(:,2),"diamond",color = "k");
 hold on 
+facets
 facets = facets(any(facets,2),:);
+facets
 normals = normals(any(normals,2),:);
 difs = fVals(facets(:,1),:)-fVals(facets(:,2),:);
 medians = fVals(facets(:,1),:)-1/2*difs;
 %%
 plot(medians(:,1),medians(:,2),'*','HandleVisibility', 'off');
 plot(fVals(:,1),fVals(:,2),'.','HandleVisibility', 'off');
-plot(fVals(facets',1),fVals(facets',2),'color','k',DisplayName = 'Convex Hull',LineWidth = 1.3);
-
+fVals
+fVals(facets',1)
+fVals(facets',2)
+%plot(fVals(k',1),fVals(k',2),'color','k',DisplayName = 'Convex Hull',LineWidth = 1.3);
+plot(fVals(facets',1),fVals(facets',2),'color','k',DisplayName = 'Considered facets',LineWidth = 1.3);
 
 %plot normals of convex hulls
 
 for i = 1:size(facets,1)
-    normals(i,:)
     vec = [medians(i,:);medians(i,:)+normals(i,:)];
     if i==1
         plot(vec(:,1),vec(:,2),'LineStyle',':','Color','r',DisplayName = 'Facet normals');
@@ -45,7 +50,7 @@ for i = 1:size(facets,1)
 end
 %%
 
-nidx = find(ismember(normals, nw,'rows'))
+nidx = find(ismember(normals, nw,'rows'));
 vec = [medians(nidx,:);medians(nidx,:)+normals(nidx,:)];
 plot(vec(:,1),vec(:,2),'LineStyle','-','Color','r',DisplayName = 'Next normal',LineWidth = 2);
 

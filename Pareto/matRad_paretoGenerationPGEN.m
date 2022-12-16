@@ -298,19 +298,35 @@ idxVOI = zeros(size(VOIs));
 VOIStr = convertCharsToStrings(VOIs);
 VOIObjNames = [];
 
-%loop over VOI and associate to index in cst. Also Get number of obj
-%functions 
+%loop over VOIs
 for  i = 1:numel(VOIStr)
+    foundVOI = false;
+    %loop over cst volumes
     for j = 1:size(cst,1)
-        if VOIStr(i)== cst{j,2}
+        if VOIStr(i)== cst{j,2} %is it an objective we are interest in?
+            foundVOI = true;
+            %need to check if all are doseobjectives or if there are constraints
             idxVOI(i) = j;
-            sizes(i) =  size(cst{j,6},2);
+            VOIObjCount = 0;
+            %sizes(i) =  size(cst{j,6},2);
             
             for k = 1:size(cst{j,6},2)
-                name = VOIStr(i) + " " + convertCharsToStrings(cst{j,6}{k}.name);
-                VOIObjNames = [VOIObjNames name];
+                if  contains(class(cst{j,6}{k}),'DoseObjectives') % is it an objective or constraint?
+                    name = VOIStr(i) + " " + convertCharsToStrings(cst{j,6}{k}.name);
+                    VOIObjNames = [VOIObjNames name];
+                    VOIObjCount = VOIObjCount+1;
+                end
             end
+            %sanitycheck to see if the VOI given actually contains objectives
+            if VOIObjCount == 0
+                
+               matRad_cfg.dispError('Chosen VOI "%s" contains no Dose Objectives Please choose another one!\n',VOIStr(i));
+            end
+            sizes(i) = VOIObjCount;
         end 
+    end
+    if ~foundVOI
+        matRad_cfg.dispError('Chosen VOI "%s" not found! (Check spelling and capital letters)\n',VOIStr(i));
     end
 end
 
@@ -331,8 +347,9 @@ for i = 1:size(pen{1},1)
     for j = 1:numel(idxVOI) %loop over indices
         
         for k = 1:size(pen{j},2)
-            cst{idxVOI(j),6}{k}.penalty;
-            cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k)*100;
+            if contains(class(cst{idxVOI(j),6}{k}),'DoseObjectives') % only consider objectives, not constraints
+                cst{idxVOI(j),6}{k}.penalty = pen{j}(i,k)*100;
+            end
         end
         
     end
@@ -380,10 +397,13 @@ returnStruct.time = time;
 %% Generaete further points
 figure
 matRad_plotParetoSurface(fInd,penGrid,VOIObjNames);
-for i=1:10 %temporary for loop TODO: Use while loop that terminates after hitting distance (tbd)
- 
+%for i=1:10 %temporary for loop TODO: Use while loop that terminates after hitting distance (tbd)
+while true
     [a,b,c,d,dists,newPen] = matRad_convexHull(fInd,penGrid);
     newPen
+    if all(newPen == 0)
+        break
+    end
     penGrid = [penGrid;newPen];
     matRad_plotPenaltyGrid(penGrid);
     
@@ -393,11 +413,10 @@ for i=1:10 %temporary for loop TODO: Use while loop that terminates after hittin
     for j = 1:numel(idxVOI) %loop over indices
         
         for k = 1:size(cst{idxVOI(j),6},2)
-            ff = newPen(pidx);
-            ff
-            cst{idxVOI(j),6}{k}.penalty = newPen(pidx)*100;
-            hh = cst{idxVOI(j),6}{k}.penalty;
-            pidx = pidx+1;
+            if contains(class(cst{idxVOI(j),6}{k}),'DoseObjectives') % only consider objectives, not constraints
+                cst{idxVOI(j),6}{k}.penalty = newPen(pidx)*100;
+                pidx = pidx+1;
+            end
         end
     end
     
@@ -410,11 +429,13 @@ for i=1:10 %temporary for loop TODO: Use while loop that terminates after hittin
     fInd = [fInd;fIndv]
     fprintf('fInd%d\n',fInd);
     
+    
+    
     %warm start block
-    optimizer.optionsWarmStart.use      = true;
-    optimizer.optionsWarmStart.zl       = info.zl;
-    optimizer.optionsWarmStart.zu       = info.zu;
-    optimizer.optionsWarmStart.lambda   = info.lambda;
+    %optimizer.optionsWarmStart.use      = true;
+    %optimizer.optionsWarmStart.zl       = info.zl;
+    %optimizer.optionsWarmStart.zu       = info.zu;
+    %optimizer.optionsWarmStart.lambda   = info.lambda;
     %matRad_plotParetoSurface(fInd,penGrid,VOIObjNames);
 end
 

@@ -32,6 +32,9 @@ load('Liver.mat');
 %%
 %cst{15,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(300,0));
 %cst{16,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(1000,45));
+
+%cst{15,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,45));
+cst{16,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(40,50));
 %% 
 % The file TG119.mat contains two Matlab variables. Let's check what we 
 % have just imported. First, the 'ct' variable comprises the ct cube along
@@ -156,15 +159,25 @@ VOI = {'Skin','PTV'};
 %returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
 %
 returnStruct2 = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
+aaaaaaaa
+%%
+save('resultsLiverPGEN1constr.mat','-v7.3','returnStruct2');
 %%
 returnStruct2
+returnStructPGEN = returnStruct2;
+%%
+returnStruct2.finds
+%%
+returnStruct2.penGrid
+%%
+convhulln(returnStruct2.finds(1:i,:))
 %%
 matRad_plotParetoSurface(returnStruct2.finds(1:i,:),returnStruct2.penGrid(1:i,:),VOI)
 
 %%
 
 i = 5
-a = matRad_convexHull(returnStruct2.finds(1:i,:),returnStruct2.penGrid(1:i,:))
+[a,b,c,d,e,f] = matRad_convexHull(returnStruct2.finds(1:i,:),returnStruct2.penGrid(1:i,:));
 %%
 %returnStruct2.penGrid
 returnStruct2.finds
@@ -184,10 +197,7 @@ matRad_plotParetoSurface(returnStructAllSq0.finds,returnStructAllSq0.penGrid/100
 %%
 matRad_plotParetoSurface(returnStruct2.finds,returnStruct2.penGrid,returnStruct2.VOIObj)
 %%
-size(returnStructWarm.penGrid)
-%%
-%save('resultsLiverPGEN2ObjectivesSqObj0D.mat','-v7.3','returnStruct2');
-%%%load('resultsLiverPGENExtensive.mat')
+
 returnStruct2.finds
 returnStruct2.penGrid
 %%

@@ -28,9 +28,20 @@
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 load('Liver.mat');
+%%
+%cst{15,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,45));
+cst{16,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(40,50));
+%%
+%f = cst{2,6}{1};
+% cst{1,6}{1}.parameters{1} = 0;
+
+%cst{3,6}{1}.parameters{1} = 0;
+%cst{2,6}{1} = DoseConstraints.matRad_ObjectiveConstraint(cst{2,6}{1},5e-4,1e-5);
+%isequal(test.name,'Objective ')
+%cst{3,6}{1} = DoseObjectives.matRad_SquaredUnderdosing(100,0);
 
 cst{15,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(0,0));
-cst{16,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(100,45));
+%cst{16,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(100,45));
 %%  
 %cst2 = cst;
 %cst{16,6}{1} = DoseObjectives.matRad_SquaredUnderdosing(800,45); 
@@ -109,7 +120,7 @@ modelName      = 'none';
 % to 30. Internally, matRad considers the fraction dose for optimization, 
 % however, objetives and constraints are defined for the entire treatment.
 pln.numOfFractions         = 30;
-pln.propStf.gantryAngles   = [0:40:359];
+pln.propStf.gantryAngles   = [0:50:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth     = 5;
 
@@ -172,93 +183,54 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % penVal stores the Grid which is then passed on. penGrid contains an
 % version easier to visualize, however harder to loop over
 %%
+
 %[resultGUI2,o,wSt] = matRad_fluenceOptimization(dij,cst,pln);    
 %%
 VOI = {'Skin','PTV'};
-nPoints = 20;
-[pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,[1,1]);
+%nPoints = 20;
+%[pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,[1,1]);
 %%
-%matRad_plotPenaltyGrid(penGrid);
 
+penGrid = [[100/sqrt(2),100/sqrt(2)];[100,0];[0,100]];
+nPoints = size(penGrid,1);
+returnStructCold210 = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid);
+%returnStructWarm = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid,true);
 %%
-penGrid = [[100,0];[0,100];penGrid]%;[0.9999,sqrt(1-0.9999^2)];[0.99999,sqrt(1-0.99999^2)]]*100;
-%%
-%%
-%%
-%objective function values are returned in order of ordering in VOI
-nPoints = 22;
-%returnStruct = matRad_paretoGeneration(dij,,pln,nPoints,VOI,[],penGrid);
 
-returnStructCold = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid);
-returnStructWarm = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid,true);
+penGrid = [[100,0];[0,100];[100/sqrt(2),100/sqrt(2)]];
+nPoints = size(penGrid,1);
+returnStructCold102 = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid);
 aaaaa
 %%
-returnStruct4.finds(4)
 %%
-[returnStruct3.weights(:,2),returnStruct2.weights(:,2)]
-%%
-resultGUI2.individualObj(2)
-%%
-returnStruct1.finds(2)
-%%
-returnStruct1.wInit(1)
-%%
-aaaaa
-%%
-returnStructWarmSq0.finds(6)
-%%
-matRad_plotParetoSurface(returnStructWarmSq0.finds,returnStructWarmSq0.penGrid/100,returnStructWarmSq0.VOIObj);
-
-%%
-aaaa
-%%
-load('resultsLiverSqOD0LinObjAll.mat')
-load('resultsLiverSqOD0All.mat')
-%%
-penLin = returnStructAllLin0.penGrid;
-penSq = returnStructAllSq0.penGrid;
-findsLin = returnStructAllLin0.finds;
-findsSq = returnStructAllSq0.finds;
-VOIObjLin = returnStructAllLin0.VOIObj;
-VOIObjSq = returnStructAllSq0.VOIObj;
-%%
-%load('resultsLiverPGENExtensive.mat')
-%save('resultsLiverSqOD0LinObjAll.mat','-v7.3','returnStructAllLin0');
-%load('resultsLiverSqOD0All.mat')
-%load('resultsLiverSqOD0.mat');
-%%
-matRad_plotParetoSurface(returnStruct2.finds,returnStruct2.penGrid,returnStruct2.VOIObj);
-
-%%
-matRad_plotParetoSurface(returnStructAllSq0.finds,returnStructAllSq0.penGrid/100,returnStructAllSq0.VOIObj);
-
-%%
-matRad_plotParetoSurface(findsLin,penLin/100,VOIObjLin)
-%%
-
-matRad_plotParetoSurface(findsSq,penSq/100,VOIObjSq)
+returnStructCold102.finds
 %%
 figure
-plot(findsLin(:,1).^2,findsLin(:,2).^2,'.',color = 'r')
-hold on 
-plot(findsSq(:,1),findsSq(:,2),'.',color = 'b')
+matRad_plotParetoSurface(returnStructCold102.finds,returnStructCold102.penGrid,returnStructCold102.VOIObj)
 %%
-%load('resultsLiverPGEN2ObjectivesSqObj0D.mat')
 %%
-returnStruct2.finds
+returnStructCold102.finds
+returnStructCold210.finds
+%%
+resultGUI1 = matRad_calcCubes(returnStructCold2.weights(:,1),dij);
+resultGUI2 = matRad_calcCubes(returnStructCold2.weights(:,2),dij);
+resultGUI3 = matRad_calcCubes(returnStructCold2.weights(:,3),dij);
+%resultGUI4 = matRad_calcCubes(returnStructCold2.weights(:,4),dij);
+%%
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 %%
 
-matRad_plotParetoSurface([findsSq;returnStruct2.finds],[penSq/100;returnStruct2.penGrid],returnStruct2.VOIObj)
-
-
-
-
+plane      = 3;
+figure,title( 'fine beam spacing plan - coarse beam spacing plan')
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI1.physicalDose,plane,slice,[],[],colorcube);
+%%
+resultGUI = resultGUI3;
+matRadGUI;
 
 %%
-resultGUI = matRad_calcCubes(returnStruct2.weights(:,2),dij);
-resultGUI2 = matRad_calcCubes(returnStruct3.weights(:,2),dij);
-%%
-resultGUI3 = matRad_calcCubes(returnStruct4.weights(:,2),dij);
+
+figure
+imagesc(resultGUI3.physicalDose(:,:,slice)),colorbar, colormap(jet);
 %%
 %recalculate Plan from weights
 resultGUIsOneSided = cell(size(weightsWarm,1),1);
@@ -277,20 +249,6 @@ for i =1:size(weightsCold,2)
 end
 %%
 [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIs{19});
-%%
-figure
-imagesc(resultGUIsOneSided{1}.physicalDose(:,:,slice)),colorbar, colormap(jet);
-%% Plot the Resulting Dose Slice
-
-% Let's plot the transversal iso-center dose slice
-
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-%%
-for i=1:size(weightsWarm,2)
-    figure
-    imagesc(resultGUIsOneSided{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
-end
-%%
 figure
 'aaa'
 plane      = 3;
