@@ -23,8 +23,15 @@ function wmin = matRad_maximallyDifferent(pens,w0)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lb = zeros(1,size(pens,1));
 ub = ones(1,size(pens,1));
+%options = optimoptions('fmincon',...
+    %'OptimalityTolerance');
+    %'ConstraintTolerance',1);
+ones(1,size(pens,1))
 wmin = fmincon(@(al) matRad_vectorDiff(al,pens),...
                 w0,... % Starting Point
                 [],[],...% Linear Constraints: sum(al)=1;
-                [1,1],1,... % Also no linear inequality constraints
-                lb,ub);
+                ones(1,size(pens,1)),1,... % Also no linear inequality constraints
+                lb,ub);%,options);
+wmin
+pens
+wmin = wmin*pens;

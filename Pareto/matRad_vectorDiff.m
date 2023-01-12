@@ -3,6 +3,7 @@ function totDif = matRad_vectorDiff(al,w)
 % a matrix of vectors (stored as row vectors)
     wi = (al*w);
     wDif = (w-wi).^2; %subtract vector from each row
-    wDif = sqrt(sum(wDif,2));
-    totDif = -1*sum(wDif,1);
+    %wDif = sqrt(sum(wDif,2));
+    wDif = sum(wDif,2);
+    totDif = sum(wDif,1);
 end

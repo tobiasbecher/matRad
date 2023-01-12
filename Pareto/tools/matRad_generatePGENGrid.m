@@ -29,7 +29,7 @@ function [penVal,sample] = matRad_generatePGENGrid(sizes)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-sample = [[1/sqrt(2),1/sqrt(2)];[1,0];[0,1]];
+sample = [eye(sum(sizes));ones(1,sum(sizes))/sqrt(sum(sizes))];
 sample = matRad_AdjustedTravellingSalesman(sample);
 
 %generate cell array for easier looping

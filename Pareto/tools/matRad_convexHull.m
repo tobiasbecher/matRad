@@ -42,6 +42,7 @@ normals = zeros(size(k));
 cs  = zeros(size(k,1),1);
 dists = zeros(size(k,1),1);
 facets= zeros(size(k));
+j = 0;
 %% loop over all facets of convex hull
 for i = 1:size(k,1)
     %% Step2: Calculate upper bounds from convex hull
@@ -63,15 +64,17 @@ for i = 1:size(k,1)
     
     %check if orientation and normal vector face in same direction
     orientationVector = fVals(diffs(1),:)-refPoint;
-    orientation =(orientationVector*normal>0);     
-    
+    hh = orientationVector*normal>0;
+    orientation =(orientationVector*normal>0);    
     %flip orientation of normal vector if it goes in the opposite direction
     normal = normal*(2*orientation-1);
-    %reject facet if normal has all negative components
     
-    if ~all(orientation)
+    
+    %reject facet if normal has all negative components
+    if all(normal<0)
         continue
     end
+    j = j +1;
     %calculate constant for hyperplane equation (c = n*V)
     %n: normal Vector, V: Vector to point on hyperplane
     c = refPoint*normal;
@@ -84,6 +87,7 @@ for i = 1:size(k,1)
     %TODO: what happens if intersection in more than one point/no
     %intersection?
     LDP= linsolve(ws,rs);
+    'a'
     %check that LDP is in bounding box of of PS, if not ignore facet
     if all(LDP<=ones(size(LDP))) && all(LDP>=zeros(size(LDP))) && (((refPoint-LDP')*normal) > 0)
         %% Step 5 Distance of LDP to upper bound
@@ -109,8 +113,11 @@ while ~found && i <= numel(I)
     if all(normals(idx,:)>=0)  && ~all(normals(idx,:) == 0) && ~any(ismember(penalties,normals(idx,:),'rows'))
         w = normals(idx,:);
         found = true;
-    else 
-        'TO BE IMPLEMENTED'
+    elseif (~all(normals(idx,:) == 0))&& ~any(ismember(penalties,normals(idx,:),'rows')) %use maximally different vector
+        PsPens = penalties(k(idx,:),:);
+        %w = mean(PsPens);
+        w = matRad_maxminVector(PsPens,mean(PsPens));
+        found = true;
     end
     i = i+1;
 end
