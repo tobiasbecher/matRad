@@ -32,7 +32,6 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
 %d = optiProb.matRad_backProjection(w,dij);
@@ -44,6 +43,7 @@ jacob = sparse([]);
 
 % initialize projection matrices and id containers
 DoseProjection{1}          = sparse([]);
+%DoseProjection{1}          = [];
 mAlphaDoseProjection{1}    = sparse([]);
 mSqrtBetaDoseProjection{1} = sparse([]);
 voxelID                     = [];
@@ -83,7 +83,7 @@ for i = 1:size(cst,1)
                case 'none' % if conventional opt: just sum objectiveectives of nominal dose
                      d_i = d{1}(cst{i,4}{1});
                      jacobSub = constraint.computeDoseConstraintJacobian(d_i);
-                  
+                     
                case 'PROB' % if prob opt: sum up expectation value of objectives
                   
                   d_i = dExp{1}(cst{i,4}{1});
@@ -151,9 +151,11 @@ for i = 1:size(cst,1)
                startIx = size(DoseProjection{1},2) + 1;
                %First append the Projection matrix with sparse zeros
                DoseProjection{1}          = [DoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
+%               DoseProjection{1}          = [DoseProjection{1},zeros(dij.doseGrid.numOfVoxels,nConst)];
                
                %Now directly write the jacobian in there
                DoseProjection{1}(cst{i,4}{1},startIx:end) = jacobSub;
+               
                
             elseif isa(optiProb.BP,'matRad_EffectProjection') && ~isempty(jacobSub)
                
@@ -198,9 +200,30 @@ end
 scenario = 1;
 % enter if statement also for protons using a constant RBE
 if isa(optiProb.BP,'matRad_DoseProjection')
-   
+   'a'
    if ~isempty(DoseProjection{scenario})
+      tic;
       jacob = DoseProjection{scenario}' * dij.physicalDose{scenario};
+      toc
+      'Dose Projection'
+      size(DoseProjection{scenario})
+      nnz(DoseProjection{scenario})/numel(DoseProjection{scenario})
+      
+      'physicalDose'
+      size(dij.physicalDose{scenario})
+      nnz(dij.physicalDose{scenario})/numel(dij.physicalDose{scenario})
+      
+      'jacob'
+      size(jacob)
+      nnz(jacob)/numel(jacob)
+      
+      
+      
+      'a'
+       
+      %jacob = DoseProjection{scenario}(dij.ixDose,:)' * dij.physicalDose{scenario}(dij.ixDose,:);
+      %jacob = (dij.physicalDose{scenario}(dij.ixDose,:)' * DoseProjection{scenario}(dij.ixDose,:))';
+      %jacob = sparse(full(DoseProjection{scenario}') * dij.physicalDose{scenario});%dirty hack for smaller constraint
    end
    
 elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
@@ -222,4 +245,3 @@ elseif isa(optiProb.BP,'matRad_EffectProjection')
       
    end
 end
-
