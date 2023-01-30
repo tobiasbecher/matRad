@@ -1,4 +1,4 @@
-function [wmin,fVal,maxfVal] = matRad_maxminVector(pens,w0)
+function wmin = matRad_testOptimization(pens,w0)
     % matRad function that creates a penalty vector maximally different to other
     % vectors of a facet
     %
@@ -21,21 +21,12 @@ function [wmin,fVal,maxfVal] = matRad_maxminVector(pens,w0)
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    lb = zeros(1,size(pens,1));
-    ub = ones(1,size(pens,1));
     %options = optimoptions('fmincon',...
         %'OptimalityTolerance');
         %'ConstraintTolerance',1);
-    %ones(1,size(pens,1))
-    ones(1,size(pens,1))
-    options = optimoptions('fminimax','Display','iter',...
-        'Display','iter',...
-        'SpecifyObjectiveGradient',true);
-    [wmin,fVal,maxfVal] = fminimax(@(al) matRad_allVectorDiff(al,pens),...
+    
+    wmin = fmincon(@(al) matRad_testOptimizationFunction(al,pens),...
                     w0,... % Starting Point
-                    [],[],...% Linear Constraints: sum(al)=1;
-                    ones(1,size(pens,1)),1,... % Also no linear inequality constraints
-                    lb,ub,[],options);
-   
-    matRad_allVectorDiff(wmin,pens);
-    wmin = wmin*pens;
+                    [],[],...
+                    [],[],...
+                    [],[],@(al)matRad_testOptimizationConstraint(al));

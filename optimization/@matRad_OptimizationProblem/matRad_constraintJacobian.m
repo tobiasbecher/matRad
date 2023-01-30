@@ -200,30 +200,9 @@ end
 scenario = 1;
 % enter if statement also for protons using a constant RBE
 if isa(optiProb.BP,'matRad_DoseProjection')
-   'a'
    if ~isempty(DoseProjection{scenario})
-      tic;
-      jacob = DoseProjection{scenario}' * dij.physicalDose{scenario};
-      toc
-      'Dose Projection'
-      size(DoseProjection{scenario})
-      nnz(DoseProjection{scenario})/numel(DoseProjection{scenario})
+      jacob = transpose(DoseProjection{scenario}) * dij.physicalDose{scenario}; %for some reason here faster than shorthand notation
       
-      'physicalDose'
-      size(dij.physicalDose{scenario})
-      nnz(dij.physicalDose{scenario})/numel(dij.physicalDose{scenario})
-      
-      'jacob'
-      size(jacob)
-      nnz(jacob)/numel(jacob)
-      
-      
-      
-      'a'
-       
-      %jacob = DoseProjection{scenario}(dij.ixDose,:)' * dij.physicalDose{scenario}(dij.ixDose,:);
-      %jacob = (dij.physicalDose{scenario}(dij.ixDose,:)' * DoseProjection{scenario}(dij.ixDose,:))';
-      %jacob = sparse(full(DoseProjection{scenario}') * dij.physicalDose{scenario});%dirty hack for smaller constraint
    end
    
 elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')

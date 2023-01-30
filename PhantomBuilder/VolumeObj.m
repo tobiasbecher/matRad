@@ -9,6 +9,7 @@ classdef (Abstract) VolumeObj
         Priority = 1;
         Visible = 1;
         visibleColor = [0 0 0];
+        center = [0,0,0]; %center of objective
         DoseObjectiveFunction;
         
     end
@@ -23,7 +24,7 @@ classdef (Abstract) VolumeObj
             if nargin > 0
                 VALUE = VALUE + increment;
             end
-        end
+        end 
     end
      methods (Static)
         function value = getInstanceCount()
@@ -32,13 +33,15 @@ classdef (Abstract) VolumeObj
         end
     end
     methods
-        function obj = VolumeObj()
+        function obj = VolumeObj(name,type)
         % Increment the counter in the constructor
             VolumeObj.getOrIncrementCount(1);
             obj.idx = VolumeObj.getOrIncrementCount();
+            obj.name = name;
+            obj.type = type;
         end
         
-        function cst = initializeParameters(cst)
+        function cst = initializeParameters(obj,cst)
             %initialize cst file
             cst{obj.idx,1}                = obj.idx-1;
             cst{obj.idx,2}                = obj.name;
@@ -49,7 +52,7 @@ classdef (Abstract) VolumeObj
             cst{obj.idx,5}.Priority       = obj.Priority;
             cst{obj.idx,5}.Visible        = obj.Visible;
             cst{obj.idx,5}.visibleColor   = obj.visibleColor;
-            
+                            
         end
     end
 end

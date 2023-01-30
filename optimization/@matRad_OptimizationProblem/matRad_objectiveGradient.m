@@ -33,7 +33,6 @@ function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 matRad_cfg = MatRad_Config.instance();
 
 % get current dose / effect / RBExDose vector
