@@ -6,3 +6,7 @@ TestPrograms/sliderChanging.m
 Pareto/testLiverConstraints.m
 optimization/+DoseConstraints/matRad_SquaredDeviationConstraint.m
 resultsTG1191constraint.mat
+Pareto/tests/testingRennen.m
+testingPGEN.m
+testSolanki.m
+temp.m
