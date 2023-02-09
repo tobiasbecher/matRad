@@ -47,6 +47,7 @@ classdef matRad_DoseProjection < matRad_BackProjection
         function wGrad = projectSingleScenarioGradient(~,dij,doseGrad,scen,~)
             if ~isempty(dij.physicalDose{scen})
                 wGrad = (dij.physicalDose{scen}'*doseGrad{scen});
+                
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();

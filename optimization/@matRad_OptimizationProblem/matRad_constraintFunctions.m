@@ -32,7 +32,6 @@ function c = matRad_constraintFunctions(optiProb,w,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 % get current dose / effect / RBExDose vector
 optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
@@ -142,4 +141,4 @@ for  i = 1:size(cst,1)
    
 end % if structure not empty and oar or target
 
-end % over all structures
+ % over all structures

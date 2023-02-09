@@ -1,6 +1,5 @@
-function wmin = matRad_testOptimization(pens,maxPoints,w0)
-    % matRad function that creates a penalty vector maximally different to other
-    % vectors of a facet
+function fValsMod = matRad_generateDummyPoints(fVals) 
+    % matRad Function that generates Dummy Points for a set of points
     %
     % input
     %   pens:       Matrix storing the penalty values of the facet
@@ -21,12 +20,19 @@ function wmin = matRad_testOptimization(pens,maxPoints,w0)
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %options = optimoptions('fmincon',...
-        %'OptimalityTolerance');
-        %'ConstraintTolerance',1);
     
-    wmin = fmincon(@(al) matRad_testOptimizationFunction(al,maxPoints,pens),...
-                    w0,... % Starting Point
-                    [],[],...
-                    [],[],...
-                    [],[],@(al)matRad_testOptimizationConstraint(al));
+theta = 0.1;
+m = size(fVals,2);
+n = size(fVals,1);
+
+U = max(fVals,[],1)*m+theta;
+
+fValsMod = zeros(size(fVals,1)*size(fVals,2),size(fVals,2));
+for i = 1:n
+    temp = repmat(fVals(i,:),m,1);
+    for j = 1:numel(U)
+        temp(j,j) = U(j);
+    end
+    fValsMod((i-1)*m+1:i*m,:) = temp;
+end
+fValsMod = [fVals;fValsMod];
