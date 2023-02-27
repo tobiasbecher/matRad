@@ -33,88 +33,31 @@ load('Prostate.mat');
 %%
 cst{1,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(300,0));
 cst{8,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(300,0));
-cst{6,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(61,78));
-cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(10,50));
-cst{8,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(10,50));
-cst{9,6} = [];
-cst{7,6} = [];
+cst{6,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(60,78));
+cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,60));
+cst{8,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,60));
+cst{9,6}{1} = struct(DoseConstraints.matRad_MinMaxDose(0,50));
+cst{7,6}{1} = struct(DoseConstraints.matRad_MinMaxDose(52,66));
 %%
 %% 
-% The file TG119.mat contains two Matlab variables. Let's check what we 
-% have just imported. First, the 'ct' variable comprises the ct cube along
-%with some meta information describing properties of the ct cube (cube 
-% dimensions, resolution, number of CT scenarios). Please note that 
-%multiple ct cubes (e.g. 4D CT) can be stored in the cell array ct.cube{}
-display(ct);
-%%
-% The 'cst' cell array defines volumes of interests along with information 
-% required for optimization. Each row belongs to one certain volume of 
-% interest (VOI), whereas each column defines different properties. 
-% Specifically, the second and third column  show the name and the type of 
-% the structure. The type can be set to OAR, TARGET or IGNORED. The fourth 
-% column contains a linear index vector that lists all voxels belonging to 
-% a certain VOI.
-display(cst);
-%%
-% First of all, we need to define what kind of radiation modality we would
-% like to use. Possible values are photons, protons or carbon. In this case
-% we want to use photons. Then, we need to define a treatment machine to 
-% correctly load the corresponding base data. matRad includes base data for
-% generic photon linear accelerator called 'Generic'. By this means matRad 
-% will look for 'photons_Generic.mat' in our root directory and will use 
-% the data provided in there for dose calculation
-
 pln.radiationMode = 'photons';  
 pln.machine       = 'Generic';
 
 %%
-% Define the flavor of optimization along with the quantity that should be
-% used for optimization. Possible quantities used for optimization are: 
-% physicalDose: physical dose based optimization; 
-% effect: biological effect based optimization;
-% RBExD: RBE weighted dose based optimzation;
-% Possible biological models are:
-% none:        use no specific biological model
-% constRBE:    use a constant RBE
-% MCN:         use the variable RBE McNamara model for protons
-% WED:         use the variable RBE Wedenberg model for protons
-% LEM:         use the biophysical variable RBE Local Effect model for carbons
-% As we are  using photons, we simply set the parameter to 'physicalDose' and
-% and 'none'
 quantityOpt    = 'physicalDose';                                     
 modelName      = 'none';  
-
-%%
-% Now we have to set some beam parameters. We can define multiple beam 
-% angles for the treatment and pass these to the plan as a vector. matRad 
-% will then interpret the vector as multiple beams. In this case, we define
-% linear spaced beams from 0 degree to 359 degree in 40 degree steps. This 
-% results in 9 beams. All corresponding couch angles are set to 0 at this 
-% point. Moreover, we set the bixelWidth to 5, which results in a beamlet 
-% size of 5 x 5 mm in the isocenter plane. The number of fractions is set 
-% to 30. Internally, matRad considers the fraction dose for optimization, 
-% however, objetives and constraints are defined for the entire treatment.
 pln.numOfFractions         = 30;
 pln.propStf.gantryAngles   = [0:40:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth     = 5;
 
-%%
-% Obtain the number of beams and voxels from the existing variables and 
-% calculate the iso-center which is per default the center of gravity of 
-% all target voxels.
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
-%% dose calculation settings
-% set resolution of dose calculation and optimization
-pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 6; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 6; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 6; % [mm]
 
-%%
-% Enable sequencing and disable direct aperture optimization (DAO) for now.
-% A DAO optimization is shown in a seperate example.
 pln.propOpt.runSequencing = 1;
 pln.propOpt.runDAO        = 0;
 
@@ -144,6 +87,9 @@ display(stf(6));
 % allows subsequent inverse optimization.
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
+
+%%
+matRadGUI;
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
 % beam weights which yield the best possible dose distribution according to
@@ -160,46 +106,49 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 VOI = {'Rectum','PTV_68','Bladder'};
 %%
 
-%nPoints = 30;
-%[pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,[1,1,1]);
-penGrid = [[100/sqrt(3),100/sqrt(3),100/sqrt(3)];[100,0,0];[0,100,0];[0,0,100]];%;penGrid];
+%cst{6,6} = [];
+%cst{6,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(1000,50));
+%cst{6,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(62,78));
 
-nPoints = size(penGrid,1);
+%penGrid = [[100/sqrt(3),100/sqrt(3),100/sqrt(3)];[100,0,0]]%;[0,100,0];[0,0,100]];%;penGrid];
+
+%nPoints = size(penGrid,1);
+
+
 %%
-matRad_plotPenaltyGrid(penGrid)
-%%
-returnStruct = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid);
+returnStruct = matRad_RennenRadio(dij,cst,pln,VOI);
 %returnStruct2 = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
 aaaaaaaa
-%%
-%save('resultsLiverPGEN1constr.mat','-v7.3','returnStruct2');
-%%
-returnStruct2
-returnStructPGEN = returnStruct2;
 
-convhulln(returnStruct2.finds(1:i,:))
 %%
-i = 4;
-matRad_plotParetoSurface(returnStructCold210.finds(1:i,:),returnStructCold210.penGrid(1:i,:)/100,VOI)
+i = 5;
+matRad_plotParetoSurface(returnStruct.finds(1:i,:),returnStruct.penGrid(1:i,:),VOI)
 %%
+returnStruct.finds
+%%
+ps = returnStruct.finds
+
+[k,facets] = matRad_ParetoSurfFromFacets(ps)
+figure
+trisurf(k,ps(:,1),ps(:,2),ps(:,3),'FaceColor','cyan')
+
+figure
+trisurf(facets(all(facets,2),:),ps(:,1),ps(:,2),ps(:,3),'FaceColor','cyan')
+hold on 
+scatter3(ps(:,1),ps(:,2),ps(:,3),'MarkerEdgeColor','black',...
+        'MarkerFaceColor',[0 0 0])
+
+
 %%
 
-weights = returnStructCold210.weights;
-resultGUIs = cell(size(weights,1),1);
+weights = returnStruct.weights;
+resultGUIs = cell(size(weights,4));
 for i =1:5
     w = weights(:,i);
-    size(w)
     resultGUIs{i} = matRad_calcCubes(w,dij);
 end
-
 %%
-penGrid = returnStructCold210.penGrid;
-fInd = returnStructCold210.finds;
-VOIObj = returnStructCold210.VOIObj;
-%%
-matRad_plotParetoSurface(fInd,penGrid/100,VOIObj)
-%%
-penGrid
+resultGUIs{4}
 %%
 
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
@@ -208,7 +157,7 @@ for i=1:5
     imagesc(resultGUIs{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
 end
 %%
-resultGUI = resultGUIs{3};
+resultGUI = resultGUIs{2};
 matRadGUI;
 %%
 penGrid(1,:)

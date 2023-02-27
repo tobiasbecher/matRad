@@ -25,7 +25,7 @@ function [k,facets,normals,distfacet,w] =matRad_PGEN(fVals,penalties,distVal)
 
 %renormalize fVals so they are in same dimension for distance calculation
 %in step 5
-
+fValsOriginal = fVals;
 %normalize
 L = min(fVals,[],1);
 U = max(fVals,[],1);
@@ -44,35 +44,11 @@ dists = zeros(size(k,1),1);
 facets= zeros(size(k));
 %we need the normals of the facets
 normals = zeros(size(k));
-
+normalOriginal = zeros(size(k));
 %loop over all facets in convex hull
 for i =1:size(k,1)
     
-    facetPoints = fVals(k(i,:),:); %points that span the given facet
-    %choose a reference point of facet that hyperplane is "build on"
-    refPoint = facetPoints(1,:);
-    hyperplaneVectors = facetPoints-refPoint; % calculate difference of reference point to all other points on facet
-    spanningVectors = hyperplaneVectors(2:end,:); %reference point not needed for calculation of normal
-    
-    %calculate the normal of the hyperplane by solving V*n = 0 where V is
-    %the matrix with the vectors spanning the hyperplane
-    normal = null(spanningVectors);
-
-    %we want to check if the components of the normal contain negative
-    %components. For that one has to check the orientation first
-    
-    %choose a point of the PS that is not part of the hyperplane currently
-    %investigated
-    idxs = (1:size(fVals,1));
-    diffs = setdiff(idxs,k(i,:));
-    
-    %calculate orientation vector
-    orientationVector = fVals(diffs(1),:)-refPoint;
-    
-    orientation = (orientationVector*normal>0);    %check orientation of facet (either 0 or 1)
-
-    normal = normal*(2*orientation-1); %flip normal vector if it faces in the wrong direction
-    
+    [facetPoints,refPoint,normal] = matRad_normalFromFacet(fVals,k,i);
     %if the facet is all negative it faces outwards and is irrelevant for
     %the calcuation of the pareto surface
     if all(normal<0)
@@ -109,7 +85,7 @@ for i =1:size(k,1)
     else
         upBound = 10;
     end
-    if all(LDP>=zeros(size(LDP)))&& all(LDP<=ones(size(LDP))*10) 
+    if all(LDP>=zeros(size(LDP)))&& all(LDP<=ones(size(LDP))*20) 
         dist = abs(LDP'*normal-c) ;
         facets(i,:) = k(i,:);
         
@@ -119,9 +95,8 @@ for i =1:size(k,1)
 end
 
 %Now for facets that have not been rejected: Sort by distances
-
+  
 [A,I] = sort(dists,'descend');
-maxdist = dists(I(1));
 w = zeros(1,size(penalties,2));
 
 found = false;
@@ -131,16 +106,17 @@ while ~found && i <= numel(I)
     idx = I(i);
     norm = normals(idx,:);
     PsPens = penalties(k(idx,:),:);
-
-    %{
- if all(norm>=0)  && ~all(norm == 0) && ~any(ismember(round(penalties,accuracy),round(norm,accuracy),'rows'))
-        w = normals(idx,:);
-        distfacet = dists(idx,1); 
-        found = true;
-        zwvec = w;
-    %}
-    if (~all(normals(idx,:) == 0))&& ~any(ismember(round(penalties,accuracy),round(norm,accuracy),'rows'))
-       
+    
+    if all(norm>=0)  && ~all(norm == 0) && ~any(ismember(round(penalties,accuracy),round(norm,accuracy),'rows'))
+            [temp1,temp2,w] = matRad_normalFromFacet(fValsOriginal,k,idx);
+            w = w';
+            %w = normals(idx,:)
+            distfacet = dists(idx,1); 
+            found = true;
+            zwvec = w;
+   
+    elseif(~all(normals(idx,:) == 0))&& ~any(ismember(round(penalties,accuracy),round(norm,accuracy),'rows'))
+           
         maxminw0 = [5/30,13/30,10/30];
         maxminw0 = maxminw0/sum(maxminw0);
         w = matRad_maxminVector(PsPens,maxminw0);
@@ -148,7 +124,7 @@ while ~found && i <= numel(I)
         zwvec = w;
         w = w/sqrt((sum(w.^2)));
         if all(round(w,accuracy)>=0)  && ~all(round(w,accuracy) == 0) && ~any(ismember(round(penalties,accuracy),round(w,accuracy),'rows'))
-            
+                        
             distfacet = dists(idx,1); 
             found = true;
         end
@@ -159,7 +135,7 @@ if dists(k(idx,:),:)
     testVar = 1;
 end
 %%
-
+%{
 figure
 trisurf(k,fVals(:,1),fVals(:,2),fVals(:,3),'FaceColor','cyan')
 hold on
@@ -175,6 +151,6 @@ linest = [zwvec;[0,0,0]]
 %plot3(linest(:,1),linest(:,2),linest(:,3))
 scatter3(zwvec(1),zwvec(2),zwvec(3))
 %%
-
+%}
 w
 'a'

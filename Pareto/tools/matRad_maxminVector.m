@@ -31,10 +31,11 @@ function [wmin,fVal,maxfVal] = matRad_maxminVector(pens,w0)
     options = optimoptions('fminimax','Display','iter',...
         'Display','iter',...
         'SpecifyObjectiveGradient',true);
+
     [wmin,fVal,maxfVal] = fminimax(@(al) matRad_allVectorDiff(al,pens),...
                     w0,... % Starting Point
-                    [],[],...% Linear Constraints: sum(al)=1;
-                    ones(1,size(pens,1)),1,... % Also no linear inequality constraints
+                    [],[],...% no inequality constraint
+                    ones(1,size(pens,1)),1,... % equality constraint sum(al) = 1;
                     lb,ub,[],options);
    
     matRad_allVectorDiff(wmin,pens);

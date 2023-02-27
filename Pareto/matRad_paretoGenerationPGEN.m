@@ -290,7 +290,7 @@ end
 %check that number of penalties equals number of constraints
 
 
-% PARETO PART
+%% PARETO PART
 %loop over VOI and get indices in cst file
 tic
 sizes = zeros(1,numel(VOIs));
@@ -332,7 +332,7 @@ end
 
 numOfObj = sum(sizes);
 fprintf('NumOfObj: %d \n',numOfObj);
-[pen,penGrid] = matRad_generatePGENGrid(sizes);
+[pen,penGrid] = matRad_generateAnchorPoints(sizes);
 matRad_plotPenaltyGrid(penGrid);
 
 weights = zeros(numel(wInit),size(penGrid,1));

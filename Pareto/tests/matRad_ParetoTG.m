@@ -31,13 +31,9 @@ matRad_rc; %If this throws an error, run it from the parent directory first to s
 %%
 load('TG119.mat');
 %%
+cst{1,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(1000,0));
+cst{3,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(1000,0));
 %cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,55));
-cst{1,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(0,0));
-cst{3,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(0,0));
-%cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,38));
-%cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,43));
-%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,55));
-%cst{3,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(0,0));
 
 pln.radiationMode = 'photons';  
 pln.machine       = 'Generic';
@@ -55,9 +51,9 @@ pln.propStf.bixelWidth     = 5;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
-pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
@@ -114,26 +110,20 @@ nPoints = 100;
 [pen,penGrid] = matRad_generateSphericalPenaltyGrid(nPoints,[1,1,1]);
 %%
 
-penGrid = [[100/sqrt(3),100/sqrt(3),100/sqrt(3)];[100,0,0];[0,0,100];[0,100,0];penGrid];
+penGrid = [[100/sqrt(3),100/sqrt(3),100/sqrt(3)];[100,0,0];[0,100,0];[0,0,100];];
 matRad_plotPenaltyGrid(penGrid);
 nPoints = size(penGrid,1);
 %%
 %returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI)
 %cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,38));
 %cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,43));
-cst{1,6} = [];
-cst{1,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(0,0));
-cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,38));
-
 cst{2,6} = [];
 cst{2,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(1000,50));
-%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,55));
+cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57));
+%%
 
-cst{3,6} = [];
-cst{3,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(0,0));
-cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,43))
+returnStructCold = matRad_RennenRadio(dij,cst,pln,VOI);
 
-returnStructCold = matRad_paretoGeneration(dij,cst,pln,nPoints,VOI,[],penGrid);
 
 
 %returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
@@ -157,13 +147,33 @@ returnStruct2.penGrid
 %%
 convhulln(returnStruct2.finds(1:i,:))
 %%
-i = 4;
-matRad_plotParetoSurface(returnStructCold.finds(1:i,:),returnStructCold.penGrid(1:i,:)/100,VOI)
+matRad_plotParetoSurface(returnStructCold.finds,returnStructCold.penGrid,VOI)
 %%
+ps = returnStructCold.finds
 
+[k,facets] = matRad_ParetoSurfFromFacets(ps)
+figure
+trisurf(k,ps(:,1),ps(:,2),ps(:,3),'FaceColor','cyan')
+
+figure
+trisurf(facets(all(facets,2),:),ps(:,1),ps(:,2),ps(:,3),'FaceColor','cyan')
+hold on 
+scatter3(ps(:,1),ps(:,2),ps(:,3),'MarkerEdgeColor','black',...
+        'MarkerFaceColor',[0 0 0])
+
+
+
+
+
+
+
+
+
+%%
 
 %returnStruct2.penGrid
 returnStructCold.penGrid(1:4,:)
+
 
 %%
 returnStructAllSq0.penGrid
@@ -172,25 +182,6 @@ aaaaaaaaaaaaaa
 %%
 returnStructLiverPGEN2LinObj0 = returnStruct2
 %save('resultsLiverPGEN2ObjectivesLinObj0D.mat','-v7.3','returnStructLiverPGEN2LinObj0');
-%%
-load('resultsLiverSqOD0All.mat')
-%%
-
-matRad_plotParetoSurface(returnStructAllSq0.finds,returnStructAllSq0.penGrid/100,returnStructAllSq0.VOIObj)
-%%
-matRad_plotParetoSurface(returnStruct2.finds,returnStruct2.penGrid,returnStruct2.VOIObj)
-%%
-
-returnStruct2.finds
-returnStruct2.penGrid
-%%
-%%
-penGrid = returnStruct2.penGrid;
-fInd = returnStruct2.finds;
-VOIObj = returnStruct2.VOIObj;
-%%
-matRad_plotParetoSurface(fInd,penGrid,VOIObj)
-%%
 n = 3;
 fVals = fInd(1:n,:);
 penVals = penGrid(1:n,:);
@@ -233,12 +224,25 @@ hold on
 test = fVals(k,:)
 plot(test(:,1),test(:,2),'-*')
 %%
+resultGUIs = {};
+size(returnStructCold.weights)
 
 
+%%
+data = returnStructCold;
+
+%%
+
+%%
+for i = 1:size(returnStructCold.weights,2)
+    resultGUIs{i} = matRad_calcCubes(returnStructCold.weights(:,i),dij);
+end
+%%
 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-for i=1:2:50
+for i= 1:size(returnStructCold.weights,2)
     figure
     imagesc(resultGUIs{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
+    title(returnStructCold.penGrid(i,:));
 end
 %%
 %%
