@@ -1,7 +1,7 @@
-function [k,facets] = matRad_ParetoSurfFromFacets(fVals)
-L = min(fVals,[],1);
-U = max(fVals,[],1);
-fVals = (fVals-L)./(U-L);
+function [k,facets,allnormals] = matRad_ParetoSurfFromFacets(fVals)
+%L = min(fVals,[],1);
+%U = max(fVals,[],1);
+%fVals = (fVals-L)./(U-L);
 %calculate convex hull
 [k,vol] = convhulln(fVals);
 
@@ -12,6 +12,7 @@ fVals = (fVals-L)./(U-L);
 
 %initializing some objects that are returned by the function
 normals = zeros(size(k));
+allnormals = zeros(size(k));
 cs  = zeros(size(k,1),1);
 dists = zeros(size(k,1),1);
 facets= zeros(size(k));
@@ -41,10 +42,12 @@ for i = 1:size(k,1)
     orientation =(orientationVector*normal>0);    
     %flip orientation of normal vector if it goes in the opposite direction
     normal = normal*(2*orientation-1);
-    
+    normal
+    normal = round(normal,4);
     
     %reject facet if normal has all negative components
-    if any(normal<0)
+    allnormals(i,:) = normal;
+    if any(round(normal,3)<0)
         continue
     end
     facets(i,:) = k(i,:);
