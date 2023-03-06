@@ -30,6 +30,7 @@ function f = matRad_objectiveFunction(optiProb,w,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matRad_cfg = MatRad_Config.instance();
+%%
 
 % get current dose / effect / RBExDose vector
 optiProb.BP.compute(dij,w);
@@ -78,7 +79,7 @@ for  i = 1:size(cst,1)
                             for ixScen = useScen
                                 d_i = d{ixScen}(cst{i,4}{useScen(1)});
 
-                                f = f + objective.penalty * objective.penalty*objective.computeDoseObjectiveFunction(d_i);
+                                f = f + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
 
                             end
 
