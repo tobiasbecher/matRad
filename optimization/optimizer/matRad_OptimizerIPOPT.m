@@ -24,10 +24,14 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         resultInfo
         env
         finalValues
+        
     end
-    
-    properties (Access = private)
+
+    properties(GetAccess = public, SetAccess = private)
         allObjectiveFunctionValues
+    end
+
+    properties (Access = private)
         axesHandle
         plotHandle
         abortRequested
@@ -120,6 +124,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
+            obj.allObjectiveFunctionValues = [];
             obj.options
             matRad_cfg = MatRad_Config.instance();
             
@@ -150,9 +155,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             ipoptStruct.ipopt = obj.options;
             % set callback functions.
             
-            funcs.objective         = @(x) optiProb.matRad_objectiveFunction(x,dij,cst);
+            funcs.objective         = @(x) optiProb.matRad_objectiveFunction2(x,dij,cst);
             funcs.constraints       = @(x) optiProb.matRad_constraintFunctions(x,dij,cst);
-            funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
+            funcs.gradient          = @(x) optiProb.matRad_objectiveGradient2(x,dij,cst);
             funcs.jacobian          = @(x) optiProb.matRad_constraintJacobian(x,dij,cst);
             funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
             funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
@@ -201,7 +206,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             obj.abortRequested = false;
             % Empty the array of stored function values
-            obj.allObjectiveFunctionValues = [];
+            
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
