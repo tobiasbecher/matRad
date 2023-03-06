@@ -121,16 +121,15 @@ cst{2,6} = [];
 cst{2,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(1000,50));
 cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57));
 %%
-
+tic;
 returnStructCold = matRad_RennenRadio(dij,cst,pln,VOI);
-
+toc
 
 
 %returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
 aaaaaaaa
 %%
-i = 4;
-[k,facets,normals,cs,dists,w]= matRad_convexHull(returnStruct.finds,returnStruct.penGrid)
+
 %%
 P = returnStruct.finds;
 [k,vol] = convhulln(P);
@@ -222,11 +221,18 @@ k
 matRad_plotParetoSurface(fVals,penGrid,returnStruct2.VOIObj);
 hold on
 test = fVals(k,:)
-plot(test(:,1),test(:,2),'-*')
+plot(test(:,1),test(:,2),'-*') 
 %%
 resultGUIs = {};
 size(returnStructCold.weights)
 
+%%
+size(data.allObj{1,1})
+%%
+for i = 1:size(data.allObj,2)
+    figure
+    plot(data.allObj{1,i})
+end
 
 %%
 data = returnStructCold;
