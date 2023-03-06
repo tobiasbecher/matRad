@@ -24,6 +24,11 @@ classdef matRad_OptimizationProblem < handle
     
     properties
         BP
+        normalizationScheme = struct('type','none');
+        objectives = {}; %cell array storing all objectives, has to be initialized at the start
+        constraints = {}; %
+        objidx;
+        constridx;
         quantityOpt = '';
         useMaxApprox = 'logsumexp'; %'pnorm'; %'logsumexp'; %'none';
         p = 30; %Can be chosen larger (closer to maximum) or smaller (closer to mean). Only tested 20 >= p >= 1
@@ -31,17 +36,26 @@ classdef matRad_OptimizationProblem < handle
         minimumW = NaN;
         maximumW = NaN;
     end
+
+    properties ()
+
+    end
     
     methods
-        function obj = matRad_OptimizationProblem(backProjection)
-            obj.BP = backProjection;
+        function obj = matRad_OptimizationProblem(backProjection,cst)
+            
+            obj.BP = backProjection; %needs to be initalized to have access to setBiologicalDosePrescriptions
+            if nargin == 2
+                obj.matRad_extractObjectivesFromcst(cst);
+                obj.matRad_extractConstraintsFromcst(cst);
+            end
         end       
         
         %Objective function declaration
-        fVal = matRad_objectiveFunction(optiProb,w,dij,cst)   
+        fVal = matRad_objectiveFunction2(optiProb,w,dij,cst)   
         
         %Objective gradient declaration
-        fGrad = matRad_objectiveGradient(optiProb,w,dij,cst)
+        fGrad = matRad_objectiveGradient2(optiProb,w,dij,cst)
         
         %Constraint function declaration
         cVal = matRad_constraintFunctions(optiProb,w,dij,cst)
@@ -81,6 +95,40 @@ classdef matRad_OptimizationProblem < handle
                 matRad_cfg.dispError('Maximum Bounds for Optimization Problem could not be set!');
             end
         end
+
+        function normalizedfVals = normalizeObjectives(optiProb,fVals)
+            switch optiProb.normalizationScheme.type
+                case 'none'
+                    normalizedfVals = fVals;
+                case 'UL'
+                    %maybe check that U and L are defined
+                    normalizedfVals = (fVals - optiProb.normalizationScheme.L)./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L); %might have to check that U and L work!
+                otherwise
+                    matRad_cfg.dispError('Normalization scheme not known!');
+            end
+        end
+
+        function normalizedGradient = normalizeGradients(optiProb,Gradient)
+            switch optiProb.normalizationScheme.type
+                case 'none'
+                    normalizedGradient = Gradient;
+                case 'UL'
+                    %maybe check that U and L are defined
+                    normalizedfVals = Gradient./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L); %might have to check that U and L work!
+                otherwise
+                    matRad_cfg.dispError('Normalization scheme not known!');
+            end
+        end
+
+        function updatePenalties(obj,newPen) %does it handle grouping?
+            if numel(obj.objectives ~= numel(newPen))
+                matRad_cfg.dispError('Number of objectives in optimization Problem not equal to number of new penalties to be set!');
+            end
+            for i=1:numel(newPen)
+                obj.objectives{i,1} = newPen(i);
+            end
+        end
+
     end
     
     methods (Access = protected)
@@ -117,6 +165,53 @@ classdef matRad_OptimizationProblem < handle
 
             grad = fac * (tmp ./ pNormVal).^(p-1);
         end
-    end                
+    end     
+    
+    
+    methods (Access = private)
+        function matRad_extractObjectivesFromcst(optiProb,cst)
+            %used to store objectives in cell array as property of optimization Problem
+            optiProb.objidx = [];
+            optiProb.objectives = {};
+            
+            for i = 1:size(cst,1) % loop over cst
+                for j = 1:numel(cst{i,6})
+                    %check whether dose objective or constraint
+                    objective = cst{i,6}{j};
+                    if isstruct(cst{i,6}{j})
+                        objective =  matRad_DoseOptimizationFunction.createInstanceFromStruct(objective);
+                    end
+                    if contains(class(objective),'DoseObjectives')
+                        optiProb.objidx = [objidx;i,j];
+                            objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
+                        optiProb.objectives(end+1) = {objective};
+                    end
+                end
+            end
+            
+
+        end
+
+        
+        function matRad_extractConstraintsFromcst(optiProb,cst) %need to check
+            %used to store constraints in cell array as property of optimization Problem 
+            optiProb.constridx = [];
+            optiProb.constraints = {};
+            
+            for i = 1:size(cst,1) % loop over cst
+                for j = 1:numel(cst{i,6})
+                    %check whether dose objective or constraint
+                    constraint = cst{i,6}{j};
+                    if isstruct(cst{i,6}{j})
+                        constraint =  matRad_DoseOptimizationFunction.createInstanceFromStruct(constraint);
+                    end
+                    if contains(class(constraint),'DoseConstraints')
+                        optiProb.constridx = [constridx;i,j];
+                        constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
+                        optiProb.constraints(end+1) = {constraint};
+                    end
+                end
+            end
+        end
 end
 
