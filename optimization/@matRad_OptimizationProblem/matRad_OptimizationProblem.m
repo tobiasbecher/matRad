@@ -37,17 +37,13 @@ classdef matRad_OptimizationProblem < handle
         maximumW = NaN;
     end
 
-    properties ()
-
-    end
     
     methods
         function obj = matRad_OptimizationProblem(backProjection,cst)
             
             obj.BP = backProjection; %needs to be initalized to have access to setBiologicalDosePrescriptions
             if nargin == 2
-                obj.matRad_extractObjectivesFromcst(cst);
-                obj.matRad_extractConstraintsFromcst(cst);
+                obj.extractObjectivesAndConstraintsFromcst(cst);
             end
         end       
         
@@ -58,15 +54,15 @@ classdef matRad_OptimizationProblem < handle
         fGrad = matRad_objectiveGradient2(optiProb,w,dij,cst)
         
         %Constraint function declaration
-        cVal = matRad_constraintFunctions(optiProb,w,dij,cst)
+        cVal = matRad_constraintFunctions2(optiProb,w,dij,cst)
         
         %Constraint Jacobian declaration
-        cJacob = matRad_constraintJacobian(optiProb,w,dij,cst)
+        cJacob = matRad_constraintJacobian2(optiProb,w,dij,cst)
         
         %Jacobian Structure
-        jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
+        jacobStruct = matRad_getJacobianStructure2(optiProb,w,dij,cst)
         
-        [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
+        [cl,cu] = matRad_getConstraintBounds2(optiProb,cst)
         
         function lb = lowerBounds(optiProb,w)
             minW = optiProb.minimumW;
@@ -120,12 +116,12 @@ classdef matRad_OptimizationProblem < handle
             end
         end
 
-        function updatePenalties(obj,newPen) %does it handle grouping?
-            if numel(obj.objectives ~= numel(newPen))
+        function updatePenalties(optiProb,newPen) %does it handle grouping?
+            if numel(optiProb.objectives) ~= numel(newPen)
                 matRad_cfg.dispError('Number of objectives in optimization Problem not equal to number of new penalties to be set!');
             end
             for i=1:numel(newPen)
-                obj.objectives{i,1} = newPen(i);
+                optiProb.objectives{i}.penalty = newPen(i)*100;
             end
         end
 
@@ -169,49 +165,39 @@ classdef matRad_OptimizationProblem < handle
     
     
     methods (Access = private)
-        function matRad_extractObjectivesFromcst(optiProb,cst)
+        function extractObjectivesAndConstraintsFromcst(optiProb,cst)
             %used to store objectives in cell array as property of optimization Problem
             optiProb.objidx = [];
-            optiProb.objectives = {};
-            
-            for i = 1:size(cst,1) % loop over cst
-                for j = 1:numel(cst{i,6})
-                    %check whether dose objective or constraint
-                    objective = cst{i,6}{j};
-                    if isstruct(cst{i,6}{j})
-                        objective =  matRad_DoseOptimizationFunction.createInstanceFromStruct(objective);
-                    end
-                    if contains(class(objective),'DoseObjectives')
-                        optiProb.objidx = [objidx;i,j];
-                            objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
-                        optiProb.objectives(end+1) = {objective};
-                    end
-                end
-            end
-            
-
-        end
-
-        
-        function matRad_extractConstraintsFromcst(optiProb,cst) %need to check
-            %used to store constraints in cell array as property of optimization Problem 
             optiProb.constridx = [];
+            optiProb.objectives = {};
             optiProb.constraints = {};
             
             for i = 1:size(cst,1) % loop over cst
-                for j = 1:numel(cst{i,6})
-                    %check whether dose objective or constraint
-                    constraint = cst{i,6}{j};
-                    if isstruct(cst{i,6}{j})
-                        constraint =  matRad_DoseOptimizationFunction.createInstanceFromStruct(constraint);
-                    end
-                    if contains(class(constraint),'DoseConstraints')
-                        optiProb.constridx = [constridx;i,j];
-                        constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
-                        optiProb.constraints(end+1) = {constraint};
+                
+                if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+
+                    for j = 1:numel(cst{i,6})
+                        %check whether dose objective or constraint
+                        obj = cst{i,6}{j};
+                        if isstruct(cst{i,6}{j})
+                            obj =  matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+                        end
+                        if contains(class(obj),'DoseObjectives')
+                            optiProb.objidx = [optiProb.objidx;i,j];
+                            obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
+                            optiProb.objectives(end+1) = {obj};
+
+                        elseif contains(class(obj),'DoseConstraints')
+                            optiProb.constridx = [optiProb.constridx;i,j];
+                            obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
+                            optiProb.constraints(end+1) = {obj};
+                        end
                     end
                 end
             end
         end
+
+
+    end        
 end
 

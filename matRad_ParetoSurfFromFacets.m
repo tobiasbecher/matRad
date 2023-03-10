@@ -28,10 +28,13 @@ for i = 1:size(k,1)
     zw = f(2:end,:);  % remove reference Point from 
     %
     normal = null(zw); %solve P*n=0 P Matrix
-    
+    %{
+    figure
+    trisurf(k,fVals(:,1),fVals(:,2),fVals(:,3),'FaceColor','cyan')
+    hold on 
+    fill3(ps(:,1),ps(:,2),ps(:,3),'green')
+    %}
     %% check orientation of calculated normal vector
-    %https://de.mathworks.com/matlabcentral/fileexchange/30892-analyze-n-dimensional-convex-polyhedra
-    
     %get vertex not in facet and calculate orientation of facet
     idxs = (1:size(fVals,1));
     diffs = setdiff(idxs,k(i,:)); % find vertex not in facet

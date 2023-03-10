@@ -238,7 +238,7 @@ end
 backProjection.scenarios    = ixForOpt;
 backProjection.scenarioProb = pln.multScen.scenProb;
 
-optiProb = matRad_OptimizationProblem(backProjection);
+optiProb = matRad_OptimizationProblem(backProjection,cst);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
@@ -295,9 +295,13 @@ resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 resultGUI.optiProb = optiProb;
-resultGUI.individualObj = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
+%resultGUI.individualObj = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
+
+ff = matRad_objectiveFunctionsOld(optiProb,wOpt,dij,cst)
 ff = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)
-ff(2)
+matRad_objectiveFunction2(optiProb,wOpt,dij,cst)
+matRad_objectiveFunction(optiProb,wOpt,dij,cst)
+%ff(2)
 %cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
 
 

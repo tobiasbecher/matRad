@@ -158,3 +158,6 @@ end
 resultGUI = resultGUIs{3}
 matRadGUI
 %%
+matRad_plotParetoSurface(data.finds,data.penGrid,{'a','b','c'})
+%%
+matRad_plotPenaltyGrid(data.penGrid)

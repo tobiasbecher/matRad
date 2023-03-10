@@ -242,7 +242,7 @@ end
 backProjection.scenarios    = ixForOpt;
 backProjection.scenarioProb = pln.multScen.scenProb;
 
-optiProb = matRad_OptimizationProblem(backProjection);
+optiProb = matRad_Optimizati onProblem(backProjection,cst);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
@@ -292,16 +292,7 @@ end
 
 % PARETO PART
 %get number of objectives at the start
-objcount = 0;
-for i = 1:size(cst,1) % loop over cst
-    for j = 1:numel(cst{i,6})
-        %check whether dose objective or constraint (should all be class
-        %here no structs)
-        if contains(class(cst{i,6}{j}),'DoseObjectives')
-            objcount = objcount + 1; %update current objective number
-        end
-    end
-end
+objcount = numel(optiProb.objectives);
 
 %% generaete Anchor Points for optimization
 [pen,penGrid] = matRad_generateAnchorPoints(ones(objcount,1));
@@ -313,21 +304,19 @@ objectiveFunctionVals = {};
 % loop over all penalty combinations
 
 for i = 1:size(pen{1},1)
-    cst = matRad_updatecst(cst,penGrid(i,:));
+    optiProb.updatePenalties(penGrid(i,:));
     
     
     optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
     wOpt = optimizer.wResult;
     info = optimizer.resultInfo;
     weights(:,i) = wOpt;
-    info
     %set values for warm start
     %optimizer.optionsWarmStart.use      = true;
     %optimizer.optionsWarmStart.zl       = info.zl;
     %optimizer.optionsWarmStart.zu       = info.zu;
     %optimizer.optionsWarmStart.lambda   = info.lambda;
-    
-    fInd(i,:) = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
+    fInd(i,:) = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)';
     objectiveFunctionVals(end + 1) = {optimizer.allObjectiveFunctionValues};
     
 end
@@ -336,16 +325,11 @@ end
 
 %% try to normalize objectives
 
-optiProb.normalizationScheme.type = 'UL'
+optiProb.normalizationScheme.type = 'UL';
 optiProb.normalizationScheme.U = max(fInd,[],1);
 optiProb.normalizationScheme.L = min(fInd,[],1);
 
-fInd = (fInd-optiProb.normalizationScheme.L)./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L)
-
-'HI'
-% loop over all penalty combinations
-
-
+fInd = (fInd-optiProb.normalizationScheme.L)./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L);
 
 
 
@@ -361,6 +345,7 @@ fInd = fInd(1:4,:);
 %}
 
 %% Grouping
+%{
 if isfield(pln.propOpt,'grouping') %if no grouping ignore
     
     switch pln.propOpt.grouping
@@ -376,7 +361,7 @@ if isfield(pln.propOpt,'grouping') %if no grouping ignore
 
     end
 end
-
+%}
 %Do we have to reoptimize as fInd would change size? 
 %{
 objcount = numel(groups); %update 
@@ -402,7 +387,8 @@ newPen = abs(firstNormal);
 
 %update cst values
 
-cst = matRad_updatecst(cst,newPen); % change for groupings!
+
+optiProb.updatePenalties(newPen); % change for groupings!
 
 %calculate new point
 
@@ -412,7 +398,7 @@ info = optimizer.resultInfo;
 weights = [weights,wOpt];
 objectiveFunctionVals(end + 1) = {optimizer.allObjectiveFunctionValues};
 %wInit = wOpt;
-fIndv = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
+fIndv = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)';
 fIndv = optiProb.normalizeObjectives(fIndv);
 %fIndv = cellfun(@(group)sum(fIndv(:,group)),groups)
 %grouping
@@ -438,7 +424,7 @@ initSize = size(penGrid,1);
 
 
 %% remaining facets
-nIter = 50;
+nIter = 5;
 for i = 1:nIter
     fprintf('Now in iteration %i',i)
     %Step 1 calculate convex Hull -> Inner approximation (IPS) and gives facets
@@ -517,7 +503,7 @@ for i = 1:nIter
 
             %update weights in cst
             
-            cst = matRad_updatecst(cst,norm);
+            optiProb.updatePenalties(norm);
             paretoOptimal = false;
             calcPointsForFacet = 0;
             while ~paretoOptimal && calcPointsForFacet < 4 %more than 4 points?
@@ -534,7 +520,7 @@ for i = 1:nIter
                 %check number of iterations needed for optimzation
                 wOpt = optimizer.wResult;
                 
-                fIndv = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
+                fIndv = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)';
                 fIndv = optiProb.normalizeObjectives(fIndv);
                 %how does the newly generated point influence the pareto
                 %surface?
