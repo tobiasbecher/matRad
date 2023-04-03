@@ -15,4 +15,4 @@ function paretoOptimalPoints = matRad_paretoOptimality(fVals)
         end
     end
     %remove non zero lines (possible issues if "all zeros" is an actual solution but should never occur for radiotherapy results)
-    paretoOptimalPoints = paretoOptimalPoints(all(paretoOptimalPoints>0,2),:) 
+    paretoOptimalPoints = paretoOptimalPoints(~all(paretoOptimalPoints==0,2),:) 

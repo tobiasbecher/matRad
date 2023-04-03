@@ -36,7 +36,7 @@ function f = matRad_objectiveFunction2(optiProb,w,dij,cst)
 
     switch optiProb.normalizationScheme.type
         case 'UL' %does not make sense together with robustness or scenarios? -> Add check?
-            fIndv = optiProb.normalizeObjectives(fIndv);%ISSUES IF COWC is used -
+            fIndv = optiProb.normalizeObjectives(fIndv')';%ISSUES IF COWC is used -
     end
 
     %TODO: sum up over scenarios

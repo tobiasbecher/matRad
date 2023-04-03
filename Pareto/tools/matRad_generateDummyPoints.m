@@ -1,4 +1,4 @@
-function fValsMod = matRad_generateDummyPoints(fVals) 
+function fValsMod = matRad_generateDummyPoints(fVals,U) 
     % matRad Function that generates Dummy Points for a set of points
     %
     % input
@@ -25,7 +25,7 @@ theta = 0.1;
 m = size(fVals,2);
 n = size(fVals,1);
 
-U = max(fVals,[],1)*m+theta;
+U = U*m+theta;
 
 fValsMod = zeros(size(fVals,1)*size(fVals,2),size(fVals,2));
 for i = 1:n

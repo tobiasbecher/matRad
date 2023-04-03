@@ -45,7 +45,6 @@ for i = 1:size(k,1)
     orientation =(orientationVector*normal>0);    
     %flip orientation of normal vector if it goes in the opposite direction
     normal = normal*(2*orientation-1);
-    normal
     normal = round(normal,4);
     
     %reject facet if normal has all negative components
@@ -55,4 +54,3 @@ for i = 1:size(k,1)
     end
     facets(i,:) = k(i,:);
 end
-'a'

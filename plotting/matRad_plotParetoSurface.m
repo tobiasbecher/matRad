@@ -1,4 +1,4 @@
-function matRad_plotParetoSurface(fInd,penGrid,VOIObj)
+function matRad_plotParetoSurface(retStruct)
 % matRad function that plots a color coded Pareto Surface. Colors are based
 % on penalty values of the data points in 3 dimensions.
 % Red means higher penalties of objective plotted along x-axis.
@@ -33,6 +33,7 @@ function matRad_plotParetoSurface(fInd,penGrid,VOIObj)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%{
 fig2 = figure;
 switch size(fInd,2)
     case 2
@@ -50,3 +51,12 @@ switch size(fInd,2)
     otherwise
         warning(['Number of objectives for Pareto Analysis not suited for Plot!']);
 end
+%}
+figure;
+ps = retStruct.finds;
+[k,facets] = matRad_ParetoSurfFromFacets(ps);
+
+trisurf(facets(all(facets,2),:),ps(:,1),ps(:,2),ps(:,3),'FaceColor',[0.8 0.8 0.8])
+hold on 
+scatter3(ps(:,1),ps(:,2),ps(:,3),'MarkerEdgeColor','black',...
+        'MarkerFaceColor',[0 0 0])

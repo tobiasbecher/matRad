@@ -13,6 +13,8 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
 %
 % output
 %   fIndv:    m x n matrix that stores all objective function values
+%             m: number of objectives
+%             n: number of scenarios
 %             there are some inconsistencies when using robust optimization            
 %
 % References

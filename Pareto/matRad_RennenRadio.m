@@ -1,4 +1,4 @@
-function returnStruct = matRad_RennenRadio(dij,cst,pln,wInit)
+function returnStruct = matRad_RennenRadio(dij,cst,pln,nIter,wInit)
 % matRad inverse pareto planning wrapper function
 % 
 % call
@@ -20,7 +20,7 @@ function returnStruct = matRad_RennenRadio(dij,cst,pln,wInit)
 %   fInd:       Array storing each individual final obj fnct value
 %
 % References
-%   -
+%   - https://dx.doi.org/10.2139/ssrn.1427721 
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -242,7 +242,7 @@ end
 backProjection.scenarios    = ixForOpt;
 backProjection.scenarioProb = pln.multScen.scenProb;
 
-optiProb = matRad_Optimizati onProblem(backProjection,cst);
+optiProb = matRad_OptimizationProblem(backProjection,cst);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
@@ -394,7 +394,6 @@ optiProb.updatePenalties(newPen); % change for groupings!
 
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 wOpt = optimizer.wResult;
-info = optimizer.resultInfo;
 weights = [weights,wOpt];
 objectiveFunctionVals(end + 1) = {optimizer.allObjectiveFunctionValues};
 %wInit = wOpt;
@@ -421,10 +420,12 @@ allErrors = {};
 initSize = size(penGrid,1);
 
 
-
+L = min(fInd,[],1);
+U = max(fInd,[],1);
+eps = U - L;
 
 %% remaining facets
-nIter = 5;
+%nIter = 100;
 for i = 1:nIter
     fprintf('Now in iteration %i',i)
     %Step 1 calculate convex Hull -> Inner approximation (IPS) and gives facets
@@ -432,12 +433,10 @@ for i = 1:nIter
     fVals = fInd;
     
     %calculate epsilon value (used in error calculation)
-    L = min(fVals,[],1);
-    U = max(fVals,[],1);
-    eps = U - L;
 
 
-    fValsMod = matRad_generateDummyPoints(fVals); %generate dummy points
+
+    fValsMod = matRad_generateDummyPoints(fVals,U); %generate dummy points
     %
     [kmod,vol] = convhulln(fValsMod);
     [kred,vol] = convhulln(fVals);
@@ -618,6 +617,7 @@ returnStruct.weights = weights;
 returnStruct.finds = fInd;
 returnStruct.penGrid = penGrid;
 
-
+returnStruct.optiProb = optiProb;
 returnStruct.allObj = objectiveFunctionVals;
+returnStruct.modcst = cst
 clear mex
