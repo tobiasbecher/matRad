@@ -1,4 +1,4 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
+function [resultGUI,optimizer,cst] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -297,12 +297,6 @@ resultGUI.info = info;
 resultGUI.optiProb = optiProb;
 %resultGUI.individualObj = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
 
-ff = matRad_objectiveFunctionsOld(optiProb,wOpt,dij,cst)
-ff = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)
-matRad_objectiveFunction2(optiProb,wOpt,dij,cst)
-matRad_objectiveFunction(optiProb,wOpt,dij,cst)
-%ff(2)
-%cst = matRad_individualObjectiveFunction(optiProb,wOpt,dij,cst);
 
 
 %Robust quantities
