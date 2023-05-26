@@ -2,9 +2,9 @@ function fValsMod = matRad_generateDummyPoints(fVals,U)
     % matRad Function that generates Dummy Points for a set of points
     %
     % input
-    %   pens:       Matrix storing the penalty values of the facet
-    %   w0:         Initial point (could be initialize
-    %
+    %   fVals:      Matrix storing the objective values of the pareto
+    %               surface
+    %   U:          Vector storing the upper bound values of the ps
     % output
     %   wmin:       Maximally different vector
     %

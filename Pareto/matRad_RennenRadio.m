@@ -578,12 +578,12 @@ for i = 1:nIter
             fInd = [fInd;fIndv];
             
             %%  plot current convex hull and facet that was run            
-               
+           %{
             figure
             trisurf(kmod,fValsMod(:,1),fValsMod(:,2),fValsMod(:,3),'FaceColor','cyan')
             hold on
             fill3(fValsMod(facetMods(idx,:),1),fValsMod(facetMods(idx,:),2),fValsMod(facetMods(idx,:),3),'r')
-
+           %}
             found = true;
         end
         facetNum = facetNum +1;

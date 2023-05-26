@@ -42,7 +42,7 @@ function [ps,errors] = matRad_Rennen(nIter)
         eps = U - L;
 
 
-        fValsMod = matRad_generateDummyPoints(fVals); %generate dummy points
+        fValsMod = matRad_generateDummyPoints(fVals,U); %generate dummy points
         %
         [k,vol] = convhulln(fValsMod);
         [kred,vol] = convhulln(fVals);
