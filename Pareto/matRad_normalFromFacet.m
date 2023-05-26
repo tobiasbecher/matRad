@@ -30,7 +30,15 @@ function [facetPoints,refPoint,normal] = matRad_normalFromFacet(fVals,k,i)
     refPoint = facetPoints(1,:);
     hyperplaneVectors = facetPoints-refPoint; % calculate difference of reference point to all other points on facet
     spanningVectors = hyperplaneVectors(2:end,:); %reference point not needed for calculation of normal
-    
+    %check for rank of spanningVectors, as in higher dimensions it can
+    %happen that "volume/area is empty" (linear dependent vectors)
+
+    if rank(spanningVectors) ~= size(spanningVectors,1)
+        normal = -1*ones(size(spanningVectors,2),1); %simply return all -1
+        return 
+    end
+
+
     %calculate the normal of the hyperplane by solving V*n = 0 where V is
     %the matrix with the vectors spanning the hyperplane
     normal = null(spanningVectors);
