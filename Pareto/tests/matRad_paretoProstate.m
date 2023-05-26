@@ -29,14 +29,11 @@
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 %%
-load('TG119.mat');
+load('PROSTATE.mat');
 %%
-%cst{1,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(1000,0));
-%cst{3,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(1000,0));
-%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,55));
 
 %pln.radiationMode = 'protons';  
-%pln.radiationMode = 'photons';
+pln.radiationMode = 'photons';
 pln.machine       = 'Generic';
 
 quantityOpt    = 'physicalDose';                                     
@@ -45,7 +42,7 @@ modelName      = 'none';
 %pln.propDoseCalc.calcLET = 0;
 
 pln.numOfFractions         = 30;
-pln.propStf.gantryAngles   = [0,90];
+pln.propStf.gantryAngles   = [0:52:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth     = 5;
 
@@ -87,7 +84,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -106,25 +103,46 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 %objective function values are returned in order of ordering in VOI
 %returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
 %
+%{
+x = [1,8,9];
+for i = x
+    cst{i,6}{1}.parameters = {0};
+end
+%cst{13,6}{1}.penalty = 100;
+%cst{14,6}{1}.penalty = 100;
 
-%returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI)
+%cst{14,6}{1}.penalty = 2000;
+%cst{3,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(1000,0));
+%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,55));
 
 %cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,38));
 %cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,43));
 %cst{2,6} = [];
 %cst{2,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(1000,50));
-cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57));
 
-
+%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57));
+%cst{13,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,32));
+%cst{14,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,32));
+cst{6,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(61.2,78.2));
+cst{7,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(50.4,64.4));
+%}
 %%
-%tic;            
-retStruct = matRad_RennenRadio(dij,cst,pln,50);
-%toc
+%cst{17,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,38));
+tic;
+resultGUI = matRad_fluenceOptimization(dij,cst,pln)
+toc
+%matRadGUI
+%Aaaaaaaa
+matRadGUI;
+%%
+tic;            
+retStruct = matRad_RennenRadio(dij,cst,pln,5);
+toc
 %%
 %resultGUI = matRad_calcCubes(retStruct.weights(:,39),dij)
 %matRadGUI;
 %%
-load('data503constr.mat')
+load('data50constrPTVs.mat')
 %%
 matRad_plotParetoSurface(retStruct)
 %%

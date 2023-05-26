@@ -32,8 +32,7 @@ builder.updatect()
 cst = builder.cst;
 ct = builder.ct;
 %
-%%
-cst{1,5}
+
 %%
 cst{1,5}.Priority = 3;
 cst{2,5}.Priority = 2;
@@ -53,6 +52,8 @@ cst{2,6}{2} = DoseConstraints.matRad_MinMaxDose(0,40);
 
 %%
 pln.radiationMode = 'photons';            
+%changed
+%pln.radiationMode = 'protons';
 pln.machine       = 'Generic';
 
 %%
@@ -71,6 +72,7 @@ quantityOpt  = 'physicalDose';
 %%
 % The remaining plan parameters are set like in the previous example files
 pln.numOfFractions        = 30;
+%pln.propStf.gantryAngles  = [0,180];
 pln.propStf.gantryAngles  = [0:70:355];
 pln.propStf.couchAngles   = zeros(size(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth    = 5;
@@ -93,68 +95,49 @@ pln.propDoseCalc.doseGrid.resolution.z = 4; % [mm]
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
-
+ 
 %% Dose Calculation
+%dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 %%
-%{
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-%% Plot the resulting dose slice
-plane      = 3;
-slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-doseWindow = [0 max([resultGUI.physicalDose(:)])];
-
-figure,title('phantom plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-
-
-matRadGUI
-%}
-
+%%
+%matRad_UIInterpolation(data,dij,pln,ct,cst)
+%'a'
 %%
 
-%%
 
-returnStructCold = matRad_RennenRadio(dij,cst,pln);
-%%
-load('dataFull.mat')
-data.finds
-returnStructCold.finds
-%%
+[resultGUI,optimizer,cst2] = matRad_fluenceOptimization(dij,cst,pln);
+matRadGUI;
+%load('dataFull.mat')
+%retStruct.modcst = cst2;
 
-matRad_sliderUI(data,dij,pln,ct)
+%matRad_UIInterpolation(retStruct,dij,pln,ct,cst,retStruct.optiProb)
+retStruct = matRad_RennenRadio(dij,cst,pln,50);
+''%%
+%load('correct100.mat')
+%load('data50protons1constr.mat')
+retStruct.modcst = retStruct.cst;
 %%
-aaaa
-%%
-%Visualize surface
+matRad_UIInterpolation(retStruct,dij,pln,ct,cst,retStruct.optiProb)
 
-ps =  data.finds
-[k2,vol] = convhulln(ps)
-[k,facets,allnormals] = matRad_ParetoSurfFromFacets(ps)
+%%
+matRad_plotParetoSurface(retStruct)
+
+%%
+ps = retStruct.finds
+%%
+fValsMod = matRad_generateDummyPoints(ps,ones(3,1))
+%%
+[k] = convhulln(fValsMod)
 figure
-trisurf(k2,ps(:,1),ps(:,2),ps(:,3),'FaceColor','red')
-hold on
-trisurf(facets(all(facets,2),:),ps(:,1),ps(:,2),ps(:,3),'FaceColor','blue')
-scatter3(data.finds(:,1),data.finds(:,2),data.finds(:,3))
+trisurf(k,fValsMod(:,1),fValsMod(:,2),fValsMod(:,3),'FaceColor','cyan')
 %%
-%matRad_plotPenaltyGrid(returnStructCold.penGrid)
 
-
-%% Recalculate plan from stored weights
-
-resultGUIs ={}
-for i = 1:size(returnStructCold.weights,2)
-    resultGUIs{i} = matRad_calcCubes(returnStructCold.weights(:,i),dij);
-end
-%%
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
-for i= 1:10
-    figure
-    imagesc(resultGUIs{i}.physicalDose(:,:,slice)),colorbar, colormap(jet);
-    title(returnStructCold.penGrid(i,:));
-end
-%%
-resultGUI = resultGUIs{3}
-matRadGUI
-%%
+[k] = convhulln(ps);
+figure
+trisurf(k,ps(:,1),ps(:,2),ps(:,3),'FaceColor','cyan')
+%scatter3(ps(:,1),ps(:,2),ps(:,3),'MarkerEdgeColor','black',...
+%        'MarkerFaceColor',[0 0 0])
+        %scatter3(psRed(:,1),psRed(:,2),psRed(:,3),'MarkerEdgeColor','black',...
+        %        'MarkerFaceColor',[1 1 0])
+        %scatter3(fNew(:,1),fNew(:,2),fNew(:,3),'filled','MarkerFaceColor','red')
