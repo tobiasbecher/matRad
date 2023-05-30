@@ -27,7 +27,7 @@
 % search path.
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-load('Liver.mat');
+load('TG119.mat');
 
 %%
 % The file TG119.mat contains two Matlab variables. Let's check what we 
@@ -168,9 +168,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % the clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to 
 % visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);    
-aaaaaaaaaaaa
-%%
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 matRadGUI;
 
 %% Plot the Resulting Dose Slice

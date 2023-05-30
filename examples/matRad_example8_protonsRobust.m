@@ -48,7 +48,7 @@ ixOAR    = 3;
 % define general VOI properties
 cst{ixNT,1} = 0;     cst{ixNT,2} = 'contour';    cst{ixNT,3} = 'OAR';
 cst{ixTarget,1} = 1; cst{ixTarget,2} = 'target'; cst{ixTarget,3} = 'TARGET';
-cst{ixOAR,1} = 2;    cst{ixOAR,2} = 'OAR';       cst{ixOAR,3} = 'OAR';
+cst{ixOAR,3} = 0;    cst{ixOAR,2} = 'OAR';       cst{ixOAR,3} = 'OAR';
 
 % define optimization parameter for both VOIs
 cst{ixNT,5}.TissueClass = 1;
@@ -207,7 +207,7 @@ for ixRob = 1:numel(ROBUST_OPT)
    %cst{ixOAR,6}{1,2}.robustness   = 'COWC';
    
    resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
-    
+   
    % combine resultGUI structures
    resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,['robust' ROBUST_OPT{1,ixRob}]);
    
@@ -250,4 +250,3 @@ matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISamp.stdCube,plane,slice,[],[],col
 
 figure,title('std dose cube based on sampling - robust')
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISampRob.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISampRob.stdCube(:))]);
-

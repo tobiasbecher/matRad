@@ -41,7 +41,7 @@ function [cl,cu] = matRad_getConstraintBounds2(optiProb,cst)
         cu = [cu;obj.upperBounds(numel(cst{curConidx,4}{1}))];
             
     end
-
+end
        
     
     
