@@ -32,7 +32,6 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
 %d = optiProb.matRad_backProjection(w,dij);
@@ -259,7 +258,7 @@ for mod = 1: length(dij.original_Dijs)
        end
     end
 end
-jacobianChecker = 1;
+jacobianChecker = 0;
 if jacobianChecker == 1
             c =  matRad_constraintFunctions(optiProb,w,dij,cst);
     epsilon = 1e-6;
@@ -277,6 +276,5 @@ if jacobianChecker == 1
     end
     
 end
-
 end
 %}

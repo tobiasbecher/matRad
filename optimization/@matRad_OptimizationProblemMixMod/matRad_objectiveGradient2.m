@@ -1,66 +1,86 @@
 function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
-    % matRad IPOPT callback: gradient function for inverse planning
-    % supporting mean dose objectives, EUD objectives, squared overdosage,
-    % squared underdosage, squared deviation and DVH objectives
-    %
-    % call
-    %   g = matRad_gradFuncWrapper(optiProb,w,dij,cst)
-    %
-    % input
-    %   optiProb: option struct defining the type of optimization
-    %   w:       bixel weight vector
-    %   dij:     dose influence matrix
-    %   cst:     matRad cst struct
-    %
-    % output
-    %   g: gradient of objective function
-    %
-    % References
-    %   [1] http://www.sciencedirect.com/science/article/pii/S0958394701000577
-    %   [2] http://www.sciencedirect.com/science/article/pii/S0360301601025858
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % Copyright 2016 the matRad development team.
-    %
-    % This file is part of the matRad project. It is subject to the license
-    % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-    % of the matRad project, including this file, may be copied, modified,
-    % propagated, or distributed except according to the terms contained in the
-    % LICENSE file.
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    matRad_cfg = MatRad_Config.instance();
-    
+% matRad IPOPT callback: gradient function for inverse planning
+% supporting mean dose objectives, EUD objectives, squared overdosage,
+% squared underdosage, squared deviation and DVH objectives
+%
+% call
+%   g = matRad_gradFuncWrapper(optiProb,w,dij,cst)
+%
+% input
+%   optiProb: option struct defining the type of optimization
+%   w:       bixel weight vector
+%   dij:     dose influence matrix
+%   cst:     matRad cst struct
+%
+% output
+%   g: gradient of objective function
+%
+% References
+%   [1] http://www.sciencedirect.com/science/article/pii/S0958394701000577
+%   [2] http://www.sciencedirect.com/science/article/pii/S0360301601025858
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2016 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+matRad_cfg = MatRad_Config.instance();
+% DOSE PROJECTION
+bxidx = 1; %modality  bixel index
+
+% Obtain cumulative dose cube 
+[d{1}]    = deal(zeros(dij.doseGrid.numOfVoxels,1));
+
+for mod = 1: length(dij.original_Dijs)
+    wt = [];
+    % split the w for current modality
+    STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
+    wt = reshape(w(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
     % get current dose / effect / RBExDose vector
-    optiProb.BP.compute(dij,w);
-    d = optiProb.BP.GetResult();
-    
+    optiProb.BP.compute(dij.original_Dijs{mod},wt);
+    dt = optiProb.BP.GetResult();
+
     % also get probabilistic quantities (nearly no overhead if empty)
-    [dExp,dOmega] = optiProb.BP.GetResultProb();
-    
+    [dExp,dOmega] = optiProb.BP.GetResultProb();                        % NOTE: not sure what exactly to do for the dOmegas 
+
+    %Index of nxt modality
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
+    % Accumulat Dose for all scenarios FOR FUTURE REVIEW ON HOW TO COMBINE
+    % DIFFFERENT UNCERTAINTY SCENARIOS FOR DIFFERENT MODALITIES
+    % currently for ST optimization 
+    for scen = 1:numel(dt)
+         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod}',2);
+    end
+end
+
     % get the used scenarios
     useScen  = optiProb.BP.scenarios;
     scenProb = optiProb.BP.scenarioProb;
-    
+
     % retrieve matching 4D scenarios
-    fullScen      = cell(ndims(d),1);
-    [fullScen{:}] = ind2sub(size(d),useScen);
+    fullScen      = cell(ndims(dt),1);
+    [fullScen{:}] = ind2sub(size(dt),useScen);
     contourScen   = fullScen{1};
-    
-    doseGradient          = cell(size(dij.physicalDose));
+
+    doseGradient          = cell(size(dij.original_Dijs{mod}.physicalDose));
     doseGradient(useScen) = {zeros(dij.doseGrid.numOfVoxels,1)};
-    
-    
+
     %For probabilistic optimization
     vOmega = 0;
-    
+
     %For COWC
-    f_COWC = zeros(size(dij.physicalDose));
-    
+    f_COWC = zeros(size(dij.original_Dijs{mod}.physicalDose));
+
     % compute objective function for every VOI.
     for  i = 1:size(optiProb.objidx,1)
         objective = optiProb.objectives{i};
@@ -77,15 +97,7 @@ function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
                     ixContour = contourScen(s);
                     d_i = d{ixScen}(cst{curObjidx,4}{ixContour});
                     %add to dose gradient
-                    %%TEMPORARY ADDITION TIL I FIGURE OUT HOW TO HANDLE WITH ROBUSTNESS 
-                    if isfield(optiProb.normalizationScheme,'U') && isfield(optiProb.normalizationScheme,'L')
-                        Ui = optiProb.normalizationScheme.U(i);
-                        Li = optiProb.normalizationScheme.L(i);
-                    else
-                        Ui = 1;
-                        Li = 0;
-                    end
-                    doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) + objective.penalty*1/(Ui-Li)*objective.computeDoseObjectiveGradient(d_i);
+                    doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
                 end
             case 'STOCH' % perform stochastic optimization with weighted / random scenarios
                 for s = 1:numel(useScen)
@@ -290,28 +302,41 @@ function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
             end
         end
     end
+
+g = cell(numel(useScen),1);
+bxidx = 1;
+for mod = 1: length(dij.original_Dijs)
+    wt = [];
+
+    % split the w and g for current modality
+    STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
+    wt = reshape(w(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
     
-    weightGradient = zeros(dij.totalNumOfBixels,1);
-    
-    optiProb.BP.computeGradient(dij,doseGradient,w);
-    g = optiProb.BP.GetGradient();
-    
+    optiProb.BP.computeGradient(dij.original_Dijs{mod},doseGradient,wt);
+    gt = optiProb.BP.GetGradient();
+                     % review for ST optimization 
     for s = 1:numel(useScen)
-       weightGradient = weightGradient + g{useScen(s)};
+        gt{s} = gt{s}*dij.STfractions{mod};  
+        g{s} = [g{s}; gt{s}];                     
+    end 
+end   
+    weightGradient = zeros(dij.totalNumOfBixels,1);
+    for s = 1:numel(useScen)
+        weightGradient = weightGradient + g{useScen(s)};
     end
-    
+
     if vOmega ~= 0
-        optiProb.BP.computeGradientProb(dij,doseGradientExp,vOmega,w);
+        optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
         gProb = optiProb.BP.GetGradientProb();
-        
+
         %Only implemented for first scenario now
         weightGradient = weightGradient + gProb{1};
     end
-
-gradientChecker = 0;
+% code snippet to check the gradient
+    gradientChecker = 1;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
-    epsilon = 1e-8;
+    epsilon = 1e-6;
     ix = unique(randi([1 numel(w)],1,5));
     
     for i=ix
@@ -325,39 +350,4 @@ if gradientChecker == 1
     end
     
 end
-plotGradient = 0;
-if plotGradient == 1
-    if exist('g', 'var')
-        norm = g{1}'*g{1};
-    else
-        norm = 0;
-    end
-    
-    allFigures = findall(groot, 'Type', 'figure');
-    if ~isempty(allFigures)
-        if numel(allFigures) < 2
-            figure;
-            plot(0, norm, 'x');
-            allFigures = findall(groot, 'Type', 'figure');
-        end
-        objectiveFunctionFigure = find(strcmp({allFigures(:).Name}, {'Progress of IPOPT Optimization'}));
-        if numel(objectiveFunctionFigure) >1
-            if isempty(allFigures(objectiveFunctionFigure(1)))
-                index = objectiveFunctionFigure(2);
-            else
-                index = objectiveFunctionFigure(1);
-            end
-        else
-            index = 1;
-        end
-                         
-        iteration = allFigures(objectiveFunctionFigure(index)).Children(2).Children.XData(end);
-        axesGradient = get(allFigures(find(~ismember([1:size(objectiveFunctionFigure,2)], objectiveFunctionFigure))),'CurrentAxes');
-        hold(axesGradient,'on');
-        grid(axesGradient,'on');
-        grid(axesGradient,'minor');
-        set(axesGradient,'YScale','log');
-        title(axesGradient,['Gradient ', optiProb.quantityOpt]);
-        hPlot = plot(axesGradient,iteration,norm,'xb','LineWidth',1.5);
-    end
 end

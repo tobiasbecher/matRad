@@ -166,7 +166,7 @@ for i = 1:size(cst,1)
                
                %First append the alphaDose matrix with sparse
                %zeros then insert
-               mAlphaDoseProjection{1}    = [mAlphaDoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
+               mAlphaDoseProjection{1} = [mAlphaDoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
                mAlphaDoseProjection{1}(cst{i,4}{1},startIx:end) = jacobSub;
                
                %The betadose has a different structure due to the
@@ -200,7 +200,7 @@ scenario = 1;
 if isa(optiProb.BP,'matRad_DoseProjection')
    
    if ~isempty(DoseProjection{scenario})
-      jacob = DoseProjection{scenario}' * dij.physicalDose{scenario};
+      jacob = sparse(DoseProjection{scenario}') * dij.physicalDose{scenario};
    end
    
 elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
@@ -221,4 +221,23 @@ elseif isa(optiProb.BP,'matRad_EffectProjection')
       
    end
 end
-
+%{
+jacobianChecker = 1;
+if jacobianChecker == 1
+    c =  matRad_constraintFunctions(optiProb,w,dij,cst);
+    epsilon = 1e-6;
+    ix = unique(randi([1 numel(w)],1,5));
+    
+    for i=ix
+        wInit = w;
+        wInit(i) = wInit(i) + epsilon;
+        cDel= matRad_constraintFunctions(optiProb,wInit,dij,cst);
+        numJacob = (cDel - c)/epsilon;
+        fullJacob = full(jacob);
+        diff = (numJacob./fullJacob(:,i) - 1)*100;
+        fprintf(['grad val #' num2str(i) ' - rel diff numerical and analytical jacob = ' num2str(diff(1)) '\n']);
+        %fprintf([' any nan or zero for photons' num2str(sum(isnan(glog{1}))) ',' num2str(sum(~logical(glog{1}))) ' for protons: ' num2str(sum(isnan(glog{2}))) ',' num2str(sum(~logical(glog{2}))) '\n']);
+    end
+    
+end
+%}

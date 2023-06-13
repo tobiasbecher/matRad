@@ -78,7 +78,8 @@ for  i = 1:size(cst,1)
                     case 'none' % if conventional opt: just sum objectives of nominal dose
                         for ixScen = useScen
                             d_i = d{ixScen}(cst{i,4}{useScen(1)});
-                            f = f + objective.computeDoseObjectiveFunction(d_i);
+                            %f = f + objective.computeDoseObjectiveFunction(d_i);
+                            f = f + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                         end
                         
                     case 'STOCH' % if prob opt: sum up expectation value of objectives

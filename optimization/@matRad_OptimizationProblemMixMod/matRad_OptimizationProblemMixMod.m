@@ -8,7 +8,7 @@ classdef matRad_OptimizationProblemMixMod < handle
     % References
     %   [1] https://doi.org/10.1093/imanum/draa038
     %   [2] https://doi.org/10.1002/mp.14148
-    %
+    %	
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2020 the matRad development team. 
@@ -25,6 +25,12 @@ classdef matRad_OptimizationProblemMixMod < handle
     properties
         BP
         quantityOpt = '';
+        objectives = {}; %cell array storing all objectives, has to be initialized at the start
+        constraints = {}; %
+        objidx;
+        constridx;
+        normalizationScheme = struct('type','none');
+
         useMaxApprox = 'logsumexp'; %'pnorm'; %'logsumexp'; %'none';
         p = 30; %Can be chosen larger (closer to maximum) or smaller (closer to mean). Only tested 20 >= p >= 1
 
@@ -33,16 +39,20 @@ classdef matRad_OptimizationProblemMixMod < handle
     end
     
     methods
-        function obj = matRad_OptimizationProblemMixMod(backProjection)
-            obj.BP = backProjection;
+        function obj = matRad_OptimizationProblemMixMod(backProjection,cst)
+        
+            obj.BP = backProjection; %needs to be initalized to have access to setBiologicalDosePrescriptions
+                if nargin == 2
+                    obj.extractObjectivesAndConstraintsFromcst(cst);
+                end
         end       
         
         %Objective function declaration
-        fVal = matRad_objectiveFunction(optiProb,w,dij,cst)   
+        fVal = matRad_objectiveFunction(optiProb,w,dij,cst) 
         
         %Objective gradient declaration
         fGrad = matRad_objectiveGradient(optiProb,w,dij,cst)
-        
+
         %Constraint function declaration
         cVal = matRad_constraintFunctions(optiProb,w,dij,cst)
         
@@ -81,6 +91,16 @@ classdef matRad_OptimizationProblemMixMod < handle
                 matRad_cfg.dispError('Maximum Bounds for Optimization Problem could not be set!');
             end
         end
+
+        function updatePenalties(optiProb,newPen) %does it handle grouping?
+            if numel(optiProb.objectives) ~= numel(newPen)
+                matRad_cfg.dispError('Number of objectives in optimization Problem not equal to number of new penalties to be set!');
+            end
+            for i=1:numel(newPen)
+                optiProb.objectives{i}.penalty = newPen(i)*100;
+            end
+        end
+
     end
     
     methods (Access = protected)
@@ -117,6 +137,42 @@ classdef matRad_OptimizationProblemMixMod < handle
 
             grad = fac * (tmp ./ pNormVal).^(p-1);
         end
-    end                
+    end          
+
+    methods (Access = private)
+        function extractObjectivesAndConstraintsFromcst(optiProb,cst)
+            %used to store objectives in cell array as property of optimization Problem
+            optiProb.objidx = [];
+            optiProb.constridx = [];
+            optiProb.objectives = {};
+            optiProb.constraints = {};
+            
+            for i = 1:size(cst,1) % loop over cst
+                
+                if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+
+                    for j = 1:numel(cst{i,6})
+                        %check whether dose objective or constraint
+                        obj = cst{i,6}{j};
+                        if isstruct(cst{i,6}{j})
+                            obj =  matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+                        end
+                        if contains(class(obj),'DoseObjectives')
+                            optiProb.objidx = [optiProb.objidx;i,j];
+                            obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
+                            optiProb.objectives(end+1) = {obj};
+
+                        elseif contains(class(obj),'DoseConstraints')
+                            optiProb.constridx = [optiProb.constridx;i,j];
+                              obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
+                            optiProb.constraints(end+1) = {obj};
+                        end
+                    end
+                end
+            end
+        end
+
+
+    end        
 end
 

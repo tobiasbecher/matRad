@@ -333,7 +333,7 @@ for mod = 1: length(dij.original_Dijs)
         g{s} = [g{s}; gt{s}];                     
     end 
 end   
-    weightGradient = zeros(dij.totalNumOfBixels,1);
+weightGradient = zeros(dij.totalNumOfBixels,1);
     for s = 1:numel(useScen)
         weightGradient = weightGradient + g{useScen(s)};
     end
@@ -346,10 +346,10 @@ end
         weightGradient = weightGradient + gProb{1};
     end
 % code snippet to check the gradient
-    gradientChecker = 1;
+    gradientChecker = 0;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
-    epsilon = 1e-6;
+    epsilon = 1e-10;
     ix = unique(randi([1 numel(w)],1,5));
     
     for i=ix
@@ -362,5 +362,42 @@ if gradientChecker == 1
         %fprintf([' any nan or zero for photons' num2str(sum(isnan(glog{1}))) ',' num2str(sum(~logical(glog{1}))) ' for protons: ' num2str(sum(isnan(glog{2}))) ',' num2str(sum(~logical(glog{2}))) '\n']);
     end
     
+end
+
+plotGradient = 0;
+if plotGradient == 1
+    if exist('g', 'var')
+        norm = g{1}'*g{1};
+    else
+        norm = 0;
+    end
+    
+    allFigures = findall(groot, 'Type', 'figure');
+    if ~isempty(allFigures)
+        if numel(allFigures) < 2
+            figure;
+            plot(0, norm, 'x');
+            allFigures = findall(groot, 'Type', 'figure');
+        end
+        objectiveFunctionFigure = find(strcmp({allFigures(:).Name}, {'Progress of IPOPT Optimization'}));
+        if numel(objectiveFunctionFigure) >1
+            if isempty(allFigures(objectiveFunctionFigure(1)))
+                index = objectiveFunctionFigure(2);
+            else
+                index = objectiveFunctionFigure(1);
+            end
+        else
+            index = 1;
+        end
+    
+        iteration = allFigures(objectiveFunctionFigure(index)).Children(2).Children.XData(end);
+        axesGradient = get(allFigures(find(~ismember([1:size(objectiveFunctionFigure,2)], objectiveFunctionFigure))),'CurrentAxes');
+        hold(axesGradient,'on');
+        grid(axesGradient,'on');
+        grid(axesGradient,'minor');
+        set(axesGradient,'YScale','log');
+        title(axesGradient,['Gradient ', optiProb.quantityOpt]);
+        hPlot = plot(axesGradient,iteration,norm,'xb','LineWidth',1.5);
+    end
 end
 end

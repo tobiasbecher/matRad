@@ -1,4 +1,4 @@
-function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
+function weightGradient = matRad_objectiveGradient2(optiProb,w,dij,cst)
     % matRad IPOPT callback: gradient function for inverse planning
     % supporting mean dose objectives, EUD objectives, squared overdosage,
     % squared underdosage, squared deviation and DVH objectives
@@ -307,57 +307,3 @@ function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
         %Only implemented for first scenario now
         weightGradient = weightGradient + gProb{1};
     end
-
-gradientChecker = 0;
-if gradientChecker == 1
-    f =  matRad_objectiveFunction(optiProb,w,dij,cst);
-    epsilon = 1e-8;
-    ix = unique(randi([1 numel(w)],1,5));
-    
-    for i=ix
-        wInit = w;
-        wInit(i) = wInit(i) + epsilon;
-        fDel= matRad_objectiveFunction(optiProb,wInit,dij,cst);
-        numGrad = (fDel - f)/epsilon;
-        diff = (numGrad/weightGradient(i) - 1)*100;
-        fprintf(['grad val #' num2str(i) ' - rel diff numerical and analytical gradient = ' num2str(diff) '\n']);
-        %fprintf([' any nan or zero for photons' num2str(sum(isnan(glog{1}))) ',' num2str(sum(~logical(glog{1}))) ' for protons: ' num2str(sum(isnan(glog{2}))) ',' num2str(sum(~logical(glog{2}))) '\n']);
-    end
-    
-end
-plotGradient = 0;
-if plotGradient == 1
-    if exist('g', 'var')
-        norm = g{1}'*g{1};
-    else
-        norm = 0;
-    end
-    
-    allFigures = findall(groot, 'Type', 'figure');
-    if ~isempty(allFigures)
-        if numel(allFigures) < 2
-            figure;
-            plot(0, norm, 'x');
-            allFigures = findall(groot, 'Type', 'figure');
-        end
-        objectiveFunctionFigure = find(strcmp({allFigures(:).Name}, {'Progress of IPOPT Optimization'}));
-        if numel(objectiveFunctionFigure) >1
-            if isempty(allFigures(objectiveFunctionFigure(1)))
-                index = objectiveFunctionFigure(2);
-            else
-                index = objectiveFunctionFigure(1);
-            end
-        else
-            index = 1;
-        end
-                         
-        iteration = allFigures(objectiveFunctionFigure(index)).Children(2).Children.XData(end);
-        axesGradient = get(allFigures(find(~ismember([1:size(objectiveFunctionFigure,2)], objectiveFunctionFigure))),'CurrentAxes');
-        hold(axesGradient,'on');
-        grid(axesGradient,'on');
-        grid(axesGradient,'minor');
-        set(axesGradient,'YScale','log');
-        title(axesGradient,['Gradient ', optiProb.quantityOpt]);
-        hPlot = plot(axesGradient,iteration,norm,'xb','LineWidth',1.5);
-    end
-end
