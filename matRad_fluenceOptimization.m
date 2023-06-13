@@ -305,7 +305,7 @@ resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 resultGUI.optiProb = optiProb;
-
+resultGUI.fopt = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1
     Cnt = 1;
