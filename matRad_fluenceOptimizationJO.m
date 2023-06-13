@@ -315,10 +315,10 @@ backProjection.scenarios    = ixForOpt;
 backProjection.scenarioProb = [pln.multScen.scenProb];
 
 if strcmp(pln.radiationMode, 'MixMod')
-   optiProb = matRad_OptimizationProblemMixMod(backProjection);
+   optiProb = matRad_OptimizationProblemMixMod(backProjection,cst);
 else
    
-   optiProb = matRad_OptimizationProblem(backProjection);
+   optiProb = matRad_OptimizationProblem(backProjection,cst);
 end
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
@@ -364,10 +364,10 @@ switch pln.propOpt.optimizer
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-       
+wInit = wInit;
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
-
 wOpt = optimizer.wResult;
+objectives  = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);
 info = optimizer.resultInfo;
 bxidx = 1;
 for mod = 1: pln.numOfModalities
@@ -382,6 +382,7 @@ for mod = 1: pln.numOfModalities
     resultGUI{mod}.info = info;
     bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
 end
+resultGUI{end+1}.objectives = objectives;
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1   
     Cnt = 1;
