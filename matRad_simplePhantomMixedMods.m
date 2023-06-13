@@ -1,14 +1,9 @@
-matRad_rc;
-matRad_cfg = MatRad_Config.instance();
-matRad_cfg.propOpt.defaultMaxIter = 50000;
-  matRad_cfg.propOpt.defaultAccChangeTol = 1e-7;
+%matRad_rc;
+%matRad_cfg = MatRad_Config.instance();
+%matRad_cfg.propOpt.defaultMaxIter = 50000;
 %%
-load 'HEAD_AND_NECK.mat'
+%%
 
-%%
-%cst{3,6}{2} = struct(DoseObjectives.matRad_MeanDose(50));
-%%
-%%
 % 
 % meta information for treatment plan (1) 
 pln(1).numOfFractions  = 5;
@@ -17,7 +12,7 @@ pln(1).machine         = 'Generic';
 
 % beam geometry settings
 pln(1).propStf.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
-pln(1).propStf.gantryAngles    = [0]; % [?] ;
+pln(1).propStf.gantryAngles    = [0 180]; % [?] ;
 pln(1).propStf.couchAngles     = zeros(numel(pln(1).propStf.gantryAngles),1); % [?] ; 
 pln(1).propStf.numOfBeams      = numel(pln(1).propStf.gantryAngles);
 pln(1).propStf.isoCenter       = ones(pln(1).propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -41,7 +36,7 @@ modelName    = 'none';             % none: for photons, protons, carbon         
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
 
-    
+
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
     
 % retrieve bio model parameters
@@ -105,47 +100,33 @@ dij = matRad_calcCombiDose(ct,stf,plnJO,cst,false);
 % Fluence optimization 
 %%
 
+
+cst{1,6}{2} = DoseConstraints.matRad_MinMaxDose(42.75,51.7)
+%%
+stf_singleModalityOne =  matRad_generateStf(ct,cst,pln(1),0);
+dij_singleModalityOne = matRad_calcParticleDose(ct,stf_singleModalityOne,pln(1), cst, 0);
+%%
+resultGUI_singleModalityOne = matRad_fluenceOptimization(dij_singleModalityOne, cst,pln(1));
+%%
+pln = pln(1);
+resultGUI = resultGUI_singleModalityOne;
+matRadGUI;
+
 %%
 %resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO)
 %%
-%cst = matRad_updatecst(cst,[1,0])
-
-%cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,40.5));
-%cst{1,6}{3} = struct(DoseObjectives.matRad_SquaredOverdosing(100,40.5));
-%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(40.5,53));
-%cst{2,6}{3} = struct(DoseObjectives.matRad_SquaredUnderdosing(100,40.5));
-
-%cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,53));
-%cst{3,6}{3} = struct(DoseObjectives.matRad_SquaredOverdosing(100,53));
-
-%cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,53));
-%cst{3,6}{3} = struct(DoseObjectives.matRad_SquaredOverdosing(100,53));
-
+%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57.5));
 %%
-%cst{15,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,35));
-%cst{15,6}{3} = struct(DoseObjectives.matRad_SquaredOverdosing(100,35));
-
-%cst{16,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(40.5,52));
-%cst{16,6}{3} = struct(DoseObjectives.matRad_SquaredUnderdosing(100,40));
+%resultGUIConstr = matRad_fluenceOptimizationJO(dij,cst,plnJO)
 %%
-resultGUIConstr = matRad_fluenceOptimizationJO(dij,cst,plnJO)
-%%
-%physicalDose =  resultGUI{1}.effect*5 + resultGUI{2}.effect*25;
-physicalDose2 = resultGUIConstr{1}.physicalDose*5 + resultGUIConstr{2}.physicalDose*25;
-%%
-
-figure
-slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
-imagesc(resultGUIConstr{1}.physicalDose(:,:,slice)*5)%-physicalDose2(:,:,slice))
-colorbar()
-    
+physicalDose =  resultGUI{1}.effect*5 + resultGUI{2}.effect*25;
+physicalDose2 = resultGUIConstr{1}.effect*5 + resultGUIConstr{2}.effect*25;
 %%
 figure
 slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
-imagesc(resultGUIConstr{2}.physicalDose(:,:,slice)*25)%-physicalDose2(:,:,slice))
+imagesc(physicalDose(:,:,slice))%-physicalDose2(:,:,slice))
 colorbar()
-%}
-    %%
+%%
 figure
 slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
 imagesc(physicalDose2(:,:,slice))%-physicalDose2(:,:,slice))

@@ -3,10 +3,17 @@ matRad_cfg = MatRad_Config.instance();
 matRad_cfg.propOpt.defaultMaxIter = 50000;
   matRad_cfg.propOpt.defaultAccChangeTol = 1e-7;
 %%
-load 'HEAD_AND_NECK.mat'
+%{
+load 'TG119.mat'
 
 %%
-%cst{3,6}{2} = struct(DoseObjectives.matRad_MeanDose(50));
+cst{1,6}{1} = struct(DoseObjectives.matRad_MeanDose(100,25));
+cst{3,6}{1} = struct(DoseObjectives.matRad_MeanDose(100,30));
+cst{2,6}{1} = struct(DoseConstraints.matRad_MinMaxDose(45,57.5));
+%%
+%}
+load('TG119_MOD.mat')
+%}
 %%
 %%
 % 
@@ -105,48 +112,90 @@ dij = matRad_calcCombiDose(ct,stf,plnJO,cst,false);
 % Fluence optimization 
 %%
 
-%%
-%resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO)
-%%
-%cst = matRad_updatecst(cst,[1,0])
-
-%cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,40.5));
-%cst{1,6}{3} = struct(DoseObjectives.matRad_SquaredOverdosing(100,40.5));
-%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(40.5,53));
-%cst{2,6}{3} = struct(DoseObjectives.matRad_SquaredUnderdosing(100,40.5));
-
-%cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,53));
-%cst{3,6}{3} = struct(DoseObjectives.matRad_SquaredOverdosing(100,53));
-
-%cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,53));
-%cst{3,6}{3} = struct(DoseObjectives.matRad_SquaredOverdosing(100,53));
 
 %%
-%cst{15,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,35));
-%cst{15,6}{3} = struct(DoseObjectives.matRad_SquaredOverdosing(100,35));
+load('TG119.mat')
+cst{1,6}{1} = DoseObjectives.matRad_MeanDose(100,0);
+%cst{2,6}{1} = DoseConstraints.matRad_MinMaxDose(45,57.5);
+%cst{2,6}{1}.epsilon = 3e-2;
+cst{3,6} = [];
+%%
+resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO);
 
-%cst{16,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(40.5,52));
-%cst{16,6}{3} = struct(DoseObjectives.matRad_SquaredUnderdosing(100,40));
-%%
-resultGUIConstr = matRad_fluenceOptimizationJO(dij,cst,plnJO)
-%%
-%physicalDose =  resultGUI{1}.effect*5 + resultGUI{2}.effect*25;
-physicalDose2 = resultGUIConstr{1}.physicalDose*5 + resultGUIConstr{2}.physicalDose*25;
+physicalDose = resultGUI{1}.physicalDose*5 + resultGUI{2}.physicalDose*25;
 %%
 
+
+%%
 figure
 slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
-imagesc(resultGUIConstr{1}.physicalDose(:,:,slice)*5)%-physicalDose2(:,:,slice))
+imagesc(resultGUI{1}.physicalDose(:,:,slice)*5)%-physicalDose2(:,:,slice))
 colorbar()
     
+figure
+slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
+imagesc(resultGUI{2}.physicalDose(:,:,slice)*25)%-physicalDose2(:,:,slice))
+colorbar()
+
+figure
+slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
+imagesc(physicalDose(:,:,slice))
+colorbar()
+
 %%
+wOpt = [resultGUI{1}.wUnsequenced;resultGUI{2}.wUnsequenced];
+%%
+delta = 1.03;
+load(['TG119_MOD.mat'])
+%%
+const1 = DoseConstraints.matRad_ObjectiveConstraint(cst{1,6}{1},25*delta,0);
+
+cst{1,6}{1} = const1;
+%%
+resultGUI2 = matRad_fluenceOptimizationJO(dij,cst,plnJO,wOpt);
+%% plots
+
+physicalDose = resultGUI2{1}.physicalDose*5 + resultGUI2{2}.physicalDose*25;
 figure
 slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
-imagesc(resultGUIConstr{2}.physicalDose(:,:,slice)*25)%-physicalDose2(:,:,slice))
+imagesc(resultGUI2{1}.physicalDose(:,:,slice)*5)%-physicalDose2(:,:,slice))
 colorbar()
-%}
-    %%
+    
 figure
 slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
-imagesc(physicalDose2(:,:,slice))%-physicalDose2(:,:,slice))
+imagesc(resultGUI2{2}.physicalDose(:,:,slice)*25)%-physicalDose2(:,:,slice))
 colorbar()
+
+figure
+slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
+imagesc(physicalDose(:,:,slice))
+colorbar()
+%%
+wOpt = [resultGUI2{1}.wUnsequenced;resultGUI2{2}.wUnsequenced]
+
+load('TG119.mat')
+const1 = DoseConstraints.matRad_ObjectiveConstraint(cst{1,6}{1},resultGUI2{3}.objectives*1.03,0);
+%%
+cst{1,6}{1} = const1;
+cst{2,6}{1} = const2;
+%%
+resultGUI3 = matRad_fluenceOptimizationJO(dij,cst,plnJO,wOpt);
+%% plots
+
+physicalDose = resultGUI3{1}.physicalDose*5 + resultGUI3{2}.physicalDose*25;
+
+figure
+slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
+imagesc(resultGUI3{1}.physicalDose(:,:,slice)*5)%-physicalDose2(:,:,slice))
+colorbar()
+    
+figure
+slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
+imagesc(resultGUI3{2}.physicalDose(:,:,slice)*25)%-physicalDose2(:,:,slice))
+colorbar()
+
+figure
+slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
+imagesc(physicalDose(:,:,slice))
+colorbar()
+%%
