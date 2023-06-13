@@ -99,6 +99,19 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
                 error(['EUD computation failed. Reduce exponent to resolve numerical problems.']);
             end
         end
+     
+        function constr = turnIntoLexicographicConstraint(obj,goal)
+            objective = DoseObjectives.matRad_EUD(100,0);
+            constr = DoseConstraints.matRad_ObjectiveConstraint(objective,goal,0);
+        end
+
+        function [obj,goal] = SetAsLexicographic(obj)
+            %update objective so it is suitable for lexicographic
+            goal = obj.parameters{1,1};
+            obj.parameters{1,1} = 0;
+            obj.penalty = 100;
+        end
+
     end
     
 end

@@ -106,6 +106,20 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
                     matRad_cfg.dispError('Invalid setting for %s in Mean Dose Objective!',obj.parameterNames{2});  
             end
         end
+
+        %% Turn into lexicographic constraint
+        function constr = turnIntoLexicographicConstraint(obj,goal)
+            objective = DoseObjectives.matRad_MeanDose(100,0);
+            constr = DoseConstraints.matRad_ObjectiveConstraint(objective,goal,0);
+        end
+
+        function [obj,goal] = SetAsLexicographic(obj)
+            %update objective so it is suitable for lexicographic
+            goal = obj.parameters{1,1};
+            obj.parameters{1,1} = 0;
+            obj.penalty = 100;
+        end
+            
     end
 
     methods (Access = protected)

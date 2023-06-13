@@ -43,6 +43,14 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             error('Function needs to be implemented!');
         end
+
+        function constr = turnIntoLexicographicConstraint(obj)
+            error('Function needs to be implemented!');
+        end
+
+        function [obj,goal] = SetAsLexicographic(obj)
+            error('Function needs to be implemented!');
+        end
          
     end
     
