@@ -157,7 +157,7 @@ if (strcmp(pln.radiationMode, 'MixMod'))
     %
             spareStruct = 0;
             for i=1:size(cst,1)
-                if ~isempty(cst{i,6}{1}) && numel(unique([cst{i,6}{1}.alphaX],'stable'))>1
+                if ~isempty(cst{i,6}) && numel(unique([cst{i,6}{1}.alphaX],'stable'))>1
                     spareStruct = i;
                 end
             end
