@@ -43,7 +43,15 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             error('Function needs to be implemented!');
         end
-         
+
+        function constr = turnIntoLexicographicConstraint(obj)
+            error('Function needs to be implemented!');
+        end
+
+        function [obj,goal] = SetAsLexicographic(obj)
+            error('Function needs to be implemented!');
+        end
+
     end
     
     methods (Access = public)
@@ -59,6 +67,10 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         function s = struct(obj)
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
+        end
+
+        function constr = convertToConstraint(obj,maxObj,epsilon)
+            constr = DoseConstraints.matRad_ObjectiveConstraint(obj,maxObj,epsilon);
         end
     end   
 end

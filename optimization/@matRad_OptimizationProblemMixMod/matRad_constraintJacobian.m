@@ -232,7 +232,7 @@ for mod = 1: length(dij.original_Dijs)
        
        if ~isempty(DoseProjection{scenario})
           jacob = [jacob,DoseProjection{scenario}' * dij.STfractions{mod} * dij.original_Dijs{mod}.physicalDose{scenario}];
-       end
+        end
        
     elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
        

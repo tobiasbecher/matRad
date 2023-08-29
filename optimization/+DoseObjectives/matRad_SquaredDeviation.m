@@ -75,6 +75,22 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             % calculate delta
             fDoseGrad = 2/numel(dose) * deviation;
         end
+
+        %% Turn into lexicographic constraint
+        function constr = turnIntoLexicographicConstraint(obj,goal)
+            if goal < 5e-4
+                goal = 5e-4*1.03;
+            end
+            objective = DoseObjectives.matRad_SquaredDeviation(100,obj.parameters{1});
+            constr = DoseConstraints.matRad_ObjectiveConstraint(objective,goal,0);
+        end
+
+        %% Set values of objective for lexicographic optimization
+        function [obj,goal] = SetAsLexicographic(obj)
+            %update objective so it is suitable for lexicographic
+            goal = 4;
+            obj.penalty = 100;
+        end
     end
     
     methods (Static)

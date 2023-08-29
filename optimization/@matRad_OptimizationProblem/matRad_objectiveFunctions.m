@@ -93,7 +93,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
                 d_i = dExp{1}(cst{curObjidx,4}{1});
                 
                 fInd = objective.computeDoseObjectiveFunction(d_i);
-                fIndv = [fIndv fInd]
+                fIndv = [fIndv fInd];
 
                 p = 1/numel(cst{curObjidx,4}{1});
                 
@@ -101,7 +101,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
                 if j == 1
                      %need to add 
                     fInd =  p * w' * dOmega{i,1};
-                    fIndv(end) =  fIndv(end) + fInd
+                    fIndv(end) =  fIndv(end) + fInd;
                 end
                 
             case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR

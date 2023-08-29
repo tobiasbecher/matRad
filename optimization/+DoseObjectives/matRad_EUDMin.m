@@ -1,5 +1,5 @@
-classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
-% matRad_SquaredOverdosing Implements a penalized squared overdosing objective
+classdef matRad_EUDMin < DoseObjectives.matRad_DoseObjective
+% matRad_EUD Implements a penalized equivalent uniform dose objective
 %   See matRad_DoseObjective for interface description
 %
 % References
@@ -19,18 +19,18 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-        name = 'Squared Overdosing';
-        parameterNames = {'d^{max}'};
-        parameterTypes = {'dose'};
+        name = 'EUD';
+        parameterNames = {'EUD^{ref}', 'k'};
+        parameterTypes = {'dose','numeric'};
     end
     
     properties
-        parameters = {30};
+        parameters = {0, 3.5};
         penalty = 1;
     end
     
     methods
-        function obj = matRad_SquaredOverdosing(penalty,dMax)
+        function obj = matRad_EUDMin(penalty,eudRef, eudExponent)
             %If we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
                 inputStruct = penalty;
@@ -45,8 +45,12 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
             
             %now handle initialization from other parameters
             if ~initFromStruct
-                if nargin == 2 && isscalar(dMax)
-                    obj.parameters{1} = dMax;
+                if nargin >= 3 && isscalar(eudExponent)
+                    obj.parameters{2} = eudExponent;
+                end
+                
+                if nargin >= 2 && isscalar(eudRef)
+                    obj.parameters{1} = eudRef;
                 end
                 
                 if nargin >= 1 && isscalar(penalty)
@@ -57,41 +61,57 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
         
         %% Calculates the Objective Function value
         function fDose = computeDoseObjectiveFunction(obj,dose)
-            % overdose : dose minus prefered dose
-            overdose = dose - obj.parameters{1};
+            % get exponent for EUD
+            k = obj.parameters{2};
             
-            % apply positive operator
-            overdose(overdose<0) = 0;
+            dose(dose <= 0) = 0.001;
+            % calculate power sum
+            powersum = sum(dose.^k);
             
-            % claculate objective function
-            fDose = 1/numel(dose) * (overdose'*overdose);
             
+            
+            
+            %Calculate objective
+            
+            %This check is not needed since dose is always positive
+            fDose =  nthroot(powersum/numel(dose),k);
         end
         
         %% Calculates the Objective Function gradient
-        function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
-            % overdose : dose minus prefered dose
-            overdose = dose - obj.parameters{1};
+        function fDoseGrad  = computeDoseObjectiveGradient(obj,dose)
+            % get exponent for EUD
+            k = obj.parameters{2};
             
-            % apply positive operator
-            overdose(overdose<0) = 0;
+            %numerical stability
+            dose(dose <= 0) = 0.001;
             
-            % calculate delta
-            fDoseGrad = 2/numel(dose) * overdose;
+            % calculate power sum
+            powersum = sum(dose.^k);
+                        
+            
+            %This check is not needed since dose is always positive
+            %if powersum > 0
+            
+            %derivatives = nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1));
+            fDoseGrad = nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1)); %.* (nthroot(powersum/numel(dose),k) - obj.parameters{1});
+            %end
+            if any(~isfinite(fDoseGrad)) % check for inf and nan for numerical stability
+                error(['EUD computation failed. Reduce exponent to resolve numerical problems.']);
+            end
         end
 
-        %% Turn into lexicographic constraint
         function constr = turnIntoLexicographicConstraint(obj,goal)
-            objective = DoseObjectives.matRad_SquaredOverdosing(100,obj.parameters{1});
+            objective = DoseObjectives.matRad_EUDMin(100,0,obj.parameters{1,2});
             constr = DoseConstraints.matRad_ObjectiveConstraint(objective,goal,0);
         end
 
-        %% Set values of objective for lexicographic optimization
         function [obj,goal] = SetAsLexicographic(obj)
             %update objective so it is suitable for lexicographic
-            goal = 0;
+            goal = obj.parameters{1,1};
+            obj.parameters{1,1} = 0;
             obj.penalty = 100;
         end
     end
     
 end
+
