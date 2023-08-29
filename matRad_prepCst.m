@@ -11,6 +11,7 @@ if sparecst ==0
         
         if ~isempty(cst{i,6})
             for j=1:numel(cst{i,6})
+                cst{i,6}{j} = struct(cst{i,6}{j}); %convert to structure (in case of class based)
                 cst{i,6}{j}.alphaX = cst{i,5}.alphaX;
                 cst{i,6}{j}.betaX = cst{i,5}.betaX;
             end

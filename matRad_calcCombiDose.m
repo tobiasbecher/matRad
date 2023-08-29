@@ -70,6 +70,15 @@ if (strcmp(pln.radiationMode, 'MixMod'))
 
         elseif strcmp(radiationModalities{k},'protons') || strcmp(radiationModalities{k},'carbon')|| strcmp(radiationModalities{k},'helium')
             dijt = [dijt, {matRad_calcParticleDose(ct,currStf,currPln,cst,CalcDoseDirect)}];
+            if strcmp(pln.originalPlans(k).bioParam.model,'constRBE')
+                ax = zeros(dijt{k}.doseGrid.numOfVoxels,1);
+                bx = zeros(dijt{k}.doseGrid.numOfVoxels,1);
+                dijt{k}.ax = ax;
+                dijt{k}.bx = bx;
+                dijt{k}.abx = ax./bx;
+                dijt{k}.mAlphaDose{1} = dijt{k}.physicalDose{1}.*ax;
+                dijt{k}.mSqrtBetaDose{1} = dijt{k}.physicalDose{1}.*sqrt(bx);
+            end
         end
 
         dij_fields = [dij_fields; fieldnames(dijt{k})];            % is this ireally necessary ?
