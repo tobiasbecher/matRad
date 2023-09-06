@@ -15,8 +15,8 @@ objective2 = struct(DoseObjectives.matRad_SquaredOverdosing(400,0));
 objective3 = struct(DoseObjectives.matRad_SquaredOverdosing(10,0));     
 
 builder.addSphericalTarget('Volume1',20,'objectives',objective1,'HU',0);
-builder.addBoxOAR('Volume2',[60,30,60],'offset',[0 -15 0],'objectives',objective2);
-builder.addBoxOAR('Volume3',[60,30,60],'offset',[0 15 0],'objectives',objective3);
+builder.addBoxOAR('Volume2',[30,60,60],'offset',[-15 0 0],'objectives',objective2);
+builder.addBoxOAR('Volume3',[30,60,60],'offset',[15 0 0],'objectives',objective3);
 
 %% Get the ct and cst (stored as properties of the phantomBuilder class)
 
@@ -24,7 +24,7 @@ builder.addBoxOAR('Volume3',[60,30,60],'offset',[0 15 0],'objectives',objective3
 %%
 %%
 
-%matRadGUI;
+matRadGUI;
 %%
 
 %%
@@ -75,17 +75,17 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 %%
 
 
-cst{1,6}{2} = DoseConstraints.matRad_MinMaxDose(42.75,51.7)
+cst{1,6}{2} = DoseConstraints.matRad_MinMaxDose(42.75,51.7);
 
 %%
-resultGUI = matRad_fluenceOptimization(dij,cst,pln)
-matRadGUI
+%resultGUI = matRad_fluenceOptimization(dij,cst,pln)
+%matRadGUI
 %%
-returnStructTG100 = matRad_RennenRadio(dij,cst,pln,100);
+%returnStructTG100 = matRad_RennenRadio(dij,cst,pln,100);
 %%
 load('dataFull.mat')
-data.finds
-returnStructCold.finds
+%data.finds
+%returnStructCold.finds
 %%
 
 matRad_sliderUI(data,dij,pln,ct)

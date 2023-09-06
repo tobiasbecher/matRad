@@ -29,6 +29,11 @@ function resultGUI = matRad_calcCubesDoseGrid(w,dij,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+if nargin < 3
+    scenNum = 1;
+end
+
 resultGUI.w = w;
 
 if isfield(dij,'numParticlesPerMU')

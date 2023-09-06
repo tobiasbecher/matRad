@@ -23,6 +23,7 @@ classdef matRad_PriorityListObjective < handle
         goalValue; % aspired value for the objective
         cstIdx;    % idx of the volume in the cst
         achievedValue = -1; %not assigned yet
+        achievedValue2 = -1; %not assigned yet
     end
 
     properties (Access = private)

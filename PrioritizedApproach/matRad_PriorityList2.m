@@ -41,8 +41,8 @@ classdef matRad_PriorityList2 < matRad_PriorityClass
             obj.numOfObj = obj.numOfObj + numel(LexiObjectives);
 
             for i = 1:numel(LexiObjectives)
-                LexiObjective.achievedValue = fopt(i);
                 LexiObjective = LexiObjectives{i};
+                LexiObjective.achievedValue2 = fopt(i);
                 bound = fopt(i)*obj.slackVariable;
                 cst2{LexiObjective.cstIdx,6}{LexiObjective.getVOIIdx()} = LexiObjective.objective.turnIntoLexicographicConstraint(bound);
             end

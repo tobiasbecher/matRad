@@ -74,15 +74,17 @@ classdef(Abstract) matRad_PriorityClass < handle
             VOINames= {};
             Objectives = {};
             AchievedValues = [];
+            AchievedValues2 = [];
             for i = 1:numel(obj.GoalList)
                 idx = obj.GoalList{i}.cstIdx;
                 goals = [goals;obj.GoalList{i}.goalValue];
                 VOINames = [VOINames;cst{idx,2}];
                 Objectives = [Objectives;obj.GoalList{i}.objective.name];
                 AchievedValues = [AchievedValues;obj.GoalList{i}.achievedValue];
+                AchievedValues2 = [AchievedValues2;obj.GoalList{i}.achievedValue2];
             end
             Priority = obj.Priorities';
-            T = table(Priority,VOINames,Objectives,goals,AchievedValues);
+            T = table(Priority,VOINames,Objectives,goals,AchievedValues,AchievedValues2);
             fig = uifigure();
             uitable(fig,"Data",T);
         end

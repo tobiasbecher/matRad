@@ -1,4 +1,4 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimizationJO(dij,cst,pln,wInit)
+function [resultGUI,optimizer,optiProb] = matRad_fluenceOptimizationJO(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -35,7 +35,7 @@ function [resultGUI,optimizer] = matRad_fluenceOptimizationJO(dij,cst,pln,wInit)
 matRad_cfg = MatRad_Config.instance();
 
 % consider VOI priorities
-cst  = matRad_setOverlapPriorities(cst);
+%cst  = matRad_setOverlapPriorities(cst);
 
 % check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
@@ -364,7 +364,7 @@ switch pln.propOpt.optimizer
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-wInit = wInit;
+%wInit = wInit/2.4;
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 wOpt = optimizer.wResult;
 objectives  = matRad_objectiveFunctions(optiProb,wOpt,dij,cst);

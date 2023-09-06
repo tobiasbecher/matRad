@@ -47,7 +47,7 @@ classdef matRad_PhantomVOIBox < matRad_VOIVolume
             for x = center(1)+offsets(1) - dims(1)/2 :1: center(1) + offsets(1) + dims(1)/2
                 for y = center(2)+offsets(2) - dims(2)/2 :1: center(2) + offsets(2) + dims(2)/2
                    for z = round(center(3)+offsets(3) - dims(3)/2) :1: center(3) + offsets(3) + dims(3)/2
-                        VOIHelper(y,x,z) = 1;
+                        VOIHelper(x,y,z) = 1;
                         
                    end
                 end
