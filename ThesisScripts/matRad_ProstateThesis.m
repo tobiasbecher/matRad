@@ -208,7 +208,7 @@ slice = round(pln(1).propStf.isoCenter(1,3)./ct.resolution.z);
 resultGUIProtonsDoseGrid = matRad_calcCubesDoseGridMixedWrapper(resultGUIs2{4},dij_singleModalityOneJO,1)
 resultGUIProtons = matRad_calcCubesMixedWrapper(resultGUIs2{4},dij_singleModalityOneJO,1)
 
-
+%%
 resultGUIProtonsDoseGridFem = matRad_calcCubesDoseGridMixedWrapper(resultGUIs2Fem{4},dij_singleModalityOneJO,1)
 resultGUIProtonsFem = matRad_calcCubesMixedWrapper(resultGUIs2Fem{4},dij_singleModalityOneJO,1)
 
@@ -277,6 +277,15 @@ cstR = matRad_setOverlapPriorities(cstR)
 cstR = matRad_resizeCstToGrid(cstR,dij_singleModalityOneJO.ctGrid.x,  dij_singleModalityOneJO.ctGrid.y,  dij_singleModalityOneJO.ctGrid.z,...
                                  dij_singleModalityOneJO.doseGrid.x,dij_singleModalityOneJO.doseGrid.y,dij_singleModalityOneJO.doseGrid.z);
 matRad_indicatorWrapperMixed(matRad_setOverlapPriorities(cstR),pln_1,resultGUIProtonsDoseGrid,70)
+%%
+cstRFem = matRad_setOverlapPriorities(cstRFem)
+cstRFem = matRad_resizeCstToGrid(cstRFem,dij_singleModalityOneJO.ctGrid.x,  dij_singleModalityOneJO.ctGrid.y,  dij_singleModalityOneJO.ctGrid.z,...
+                                 dij_singleModalityOneJO.doseGrid.x,dij_singleModalityOneJO.doseGrid.y,dij_singleModalityOneJO.doseGrid.z);
+%%
+matRad_indicatorWrapperMixed(matRad_setOverlapPriorities(cstRFem),pln_1,resultGUIProtonsDoseGrid,70)
+%%
+matRad_indicatorWrapperMixed(matRad_setOverlapPriorities(cstRFem),pln_1,resultGUIProtonsDoseGridFem)
+
 %% dvh
 
 figure
@@ -286,13 +295,12 @@ matRad_showDVH(dvh,cstR,pln_1)
 matlab2tikz('width','\fwidth','height','\fheight')
 %%
 figure
-dvh = matRad_calcDVH(cstR,resultGUIProtonsDoseGridFem{1}.physicalDose*5)
-matRad_showDVH(dvh,cstR,pln_1,1)
+dvh = matRad_calcDVH(cstRFem,resultGUIProtonsDoseGridFem{1}.physicalDose*5)
+matRad_showDVH(dvh,cstRFem,pln_1,1)
 
-dvh = matRad_calcDVH(cstR,resultGUIProtonsDoseGridM{1}.physicalDose*5+resultGUIProtonsDoseGridM{2}.physicalDose*25)
-matRad_showDVH(dvh,cstR,pln_1,2)
-
-matlab2tikz('width','\fwidth','height','\fheight')
+dvh = matRad_calcDVH(cstRFem,resultGUIProtonsDoseGridM{1}.physicalDose*5+resultGUIProtonsDoseGridM{2}.physicalDose*25)
+matRad_showDVH(dvh,cstRFem,pln_1,2)
+%%
 %%
 %{
 %% ANALYSIS PROTONS
@@ -328,6 +336,199 @@ matRad_showDVH(dvhMixed,cstR,pln_1,2)
 %}
 
 
+%%
+resultGUI = matRad_convert2pPlans(resultGUIsM,pln_M)
+%%
+%doseWindow = [0,max(resultGUI.physicalDose_3,[],'all')]
+%%
+resultGUI1 = matRad_convert2pPlans(resultGUIsM,pln_M)
+%%
+
+resultGUI2 = matRad_convert2pPlans(resultGUIs2M,pln_M)
+%%
+matRadGUI
+%%
+matRad_indicatorWrapperMixed(matRad_setOverlapPriorities(cstRFem),pln_M,resultGUIProtonsDoseGridM)
 
 
 
+
+%% Plot slices
+doseWindowTotal1 = [0,max(resultGUI1.physicalDose_3,[],'all')]
+doseWindowTotal2 = [0,max(resultGUI2.physicalDose_2,[],'all')]
+doseWindowProtons1 = [0,max(resultGUI1.physicalDose_3_protons,[],'all')]
+doseWindowProtons2 = [0,max(resultGUI2.physicalDose_6_protons,[],'all')]
+doseWindowPhotons1 = [0,max(resultGUI1.physicalDose_5_photons,[],'all')]
+doseWindowPhotons2 = [0,max(resultGUI2.physicalDose_6_photons,[],'all')]
+%% Step 1 total 
+%change physical dose and timeline for different views to save
+figure
+[hCMapN,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(gca(),ct,cst,1,resultGUI1.physicalDose_1,3,slice,[],[],[],[],doseWindowTotal1)
+for j= 1: numel(hContour)
+    for k = 1:numel(hContour{j})
+        hContour{j}(k).LineWidth = 1;
+        hContour{j}(k).Color = 'black';
+    end
+end
+set(gca,'xtick',[])
+set(gca,'xticklabel',[])
+set(gca,'ytick',[])
+set(gca,'yticklabel',[])
+set(gca,'ylabel',[])
+set(gca,'xlabel',[])
+set(gca,'title',[])
+zoom(1.4)
+
+
+matlab2tikz('width','\fwidth','height','\fheight')
+
+
+
+
+%%
+%% Step 2 total 
+%change physical dose and timeline for different views to save
+figure
+[hCMapN,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(gca(),ct,cst,1,resultGUI2.physicalDose_6,3,slice,[],[],[],[],doseWindowTotal2)
+for j = 1: numel(hContour)
+    for k = 1:numel(hContour{j})
+        hContour{j}(k).LineWidth = 1;
+        hContour{j}(k).Color = 'black';
+    end
+end
+set(gca,'xtick',[])
+set(gca,'xticklabel',[])
+set(gca,'ytick',[]) 
+set(gca,'yticklabel',[])
+set(gca,'ylabel',[])
+set(gca,'xlabel',[])
+set(gca,'title',[])
+zoom(1.4)
+
+matlab2tikz('width','\fwidth','height','\fheight')
+%%
+
+
+
+
+%% Step 1 protons
+%change physical dose and timeline for different views to save
+figure
+[hCMapN,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(gca(),ct,cstRFem,1,resultGUI1.physicalDose_6_protons,3,slice,[],[],[],[],doseWindowProtons1)
+for j= 1: numel(hContour)
+    for k = 1:numel(hContour{j})
+        hContour{j}(k).LineWidth = 1;
+        hContour{j}(k).Color = 'black';
+    end
+end
+set(gca,'xtick',[])
+set(gca,'xticklabel',[])
+set(gca,'ytick',[])
+set(gca,'yticklabel',[])
+set(gca,'ylabel',[])
+set(gca,'xlabel',[])
+set(gca,'title',[])
+zoom(1.4)
+
+matlab2tikz('width','\fwidth','height','\fheight')
+%%
+
+
+
+
+
+
+%%
+%%
+%%
+%%
+%%
+%%
+%% Step 2 total protons
+%change physical dose and timeline for different views to save
+figure
+[hCMapN,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(gca(),ct,cst,1,resultGUI2.physicalDose_6_protons,3,slice,[],[],[],[],doseWindowProtons2)
+for j= 1: numel(hContour)
+    for k = 1:numel(hContour{j})
+        hContour{j}(k).LineWidth = 1;
+        hContour{j}(k).Color = 'black';
+    end
+end
+set(gca,'xtick',[])
+set(gca,'xticklabel',[])
+set(gca,'ytick',[])
+set(gca,'yticklabel',[])
+set(gca,'ylabel',[])
+set(gca,'xlabel',[])
+set(gca,'title',[])
+zoom(1.4)
+
+matlab2tikz('width','\fwidth','height','\fheight')
+%%
+
+
+
+
+
+
+%%
+%%
+%%
+%% Step 1 photons
+%change physical dose and timeline for different views to save
+figure
+[hCMapN,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(gca(),ct,cst,1,resultGUI1.physicalDose_6_photons,3,31,[],[],[],[],doseWindowPhotons1)
+for j= 1: numel(hContour)
+    for k = 1:numel(hContour{j})
+        hContour{j}(k).LineWidth = 1;
+        hContour{j}(k).Color = 'black';
+    end
+end
+set(gca,'xtick',[])
+set(gca,'xticklabel',[])
+set(gca,'ytick',[])
+set(gca,'yticklabel',[])
+set(gca,'ylabel',[])
+set(gca,'xlabel',[])
+set(gca,'title',[])
+zoom(1.4)
+
+
+matlab2tikz('width','\fwidth','height','\fheight')
+%%
+%%
+%%
+%%
+%%
+%%
+%% Step 1 total photons
+%change physical dose and timeline for different views to save
+figure
+[hCMapN,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(gca(),ct,cst,1,resultGUI2.physicalDose_6_photons,3,31,[],[],[],[],doseWindowPhotons2)
+for j= 1: numel(hContour)
+    for k = 1:numel(hContour{j})
+        hContour{j}(k).LineWidth = 1;
+        hContour{j}(k).Color = 'black';
+    end
+end
+set(gca,'xtick',[])
+set(gca,'xticklabel',[])
+set(gca,'ytick',[])
+set(gca,'yticklabel',[])
+set(gca,'ylabel',[])
+set(gca,'xlabel',[])
+set(gca,'title',[])
+zoom(1.4)
+
+
+matlab2tikz('width','\fwidth','height','\fheight')
+%%
+%%
+%%
+%%
+
+matlab2tikz('width','\fwidth','height','\fheight')
+%%
+resultGUI = matRad_convert2pPlans(resultGUIs2M,pln_M)
+%%
+matRadGUI
